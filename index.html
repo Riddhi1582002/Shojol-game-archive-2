@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SHOJOL'S GAME ARCHIVE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    /* CURSOR */
+    * { cursor: url('data:image/png;base64,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') 48 48, crosshair !important; }
+  </style>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- FRAME SCRUBBER BG -->
+  <canvas class="frame-canvas" id="frame-canvas"></canvas>
+  <div class="grad-top"></div>
+  <div class="grad-bottom"></div>
+
+  <!-- MUTE BUTTON -->
+  <button class="mute-btn" id="mute-btn" title="Toggle sound">🔇</button>
+  <audio id="bg-music" loop preload="auto">
+    <source src="https://static.wixstatic.com/mp3/611f0c_ded51d0d15ea41d199816666caefb463.mp3" type="audio/mpeg"/>
+  </audio>
+
+  <!-- HIDDEN MESSAGE (small dot, top right, invisible unless you know it's there) -->
+  <div id="easter-dot" class="easter-dot"></div>
+  <div id="easter-overlay" class="easter-overlay">
+    <div class="easter-text">I LOVE YOU,<br/>SHOJOL BABY</div>
+  </div>
+
+  <!-- RIBBON -->
+  <header class="ribbon">
+    <div class="ribbon-inner">
+      <div class="ribbon-left">
+        <input class="search-input" id="search-input" type="text" placeholder="SEARCH..."/>
+        <div class="filter-pills" id="filter-pills">
+          <button class="pill active" data-filter="all">ALL</button>
+        </div>
+        <select class="sort-select" id="sort-select">
+          <option value="number">BY NUMBER</option>
+          <option value="alpha">A → Z</option>
+          <option value="rating">BY RATING</option>
+          <option value="metacritic">METACRITIC</option>
+        </select>
+      </div>
+      <div class="ribbon-right">
+        <div class="tab-group">
+          <button class="tab active" data-tab="completed">COMPLETED</button>
+          <button class="tab" data-tab="backlog">BACKLOG</button>
+          <button class="tab" data-tab="ours">OUR GAMES ♥</button>
+        </div>
+        <div class="stat-block"><span class="stat-num" id="total-count">0</span><span class="stat-label">CLEARED</span></div>
+        <div class="stat-block"><span class="stat-num" id="backlog-count">0</span><span class="stat-label">BACKLOG</span></div>
+        <div class="stat-block stat-clickable" id="reviewed-stat" title="Show only reviewed games"><span class="stat-num" id="reviewed-count">0</span><span class="stat-label">REVIEWED</span></div>
+        <button class="btn-add" id="btn-add-game">+ ADD</button>
+        <button class="btn-grid" id="btn-grid" title="Toggle grid view">⊞</button>
+      </div>
+    </div>
+    <div class="genre-bar" id="genre-bar"></div>
+  </header>
+
+  <!-- HERO TITLE -->
+  <div class="hero-wrap">
+    <div class="hero-title">
+      <img class="hero-img" id="archive-name" src="shojols-logo.png" alt="SHOJOL'S"/>
+      <div class="hero-accent">GAME ARCHIVE</div>
+    </div>
+  </div>
+
+  <!-- CURSOR TRAIL CANVAS -->
+  <canvas class="trail-canvas" id="trail-canvas"></canvas>
+  <canvas class="ember-canvas" id="ember-canvas"></canvas>
+  <div class="fog-layer"></div>
+
+  <!-- LOADING BAR -->
+  <div class="xp-bar-wrap" id="xp-bar-wrap">
+    <div class="xp-bar-label">LOADING ARCHIVE</div>
+    <div class="xp-bar-track">
+      <div class="xp-bar-fill" id="xp-fill"></div>
+      <div class="xp-segments"></div>
+    </div>
+  </div>
+
+  <!-- SHELF -->
+  <div class="shelf-wrap">
+    <div class="shelf" id="game-shelf"></div>
+    <div class="scrollbar-wrap">
+      <div class="scrollbar-track"><div class="scrollbar-thumb" id="shelf-thumb"></div></div>
+    </div>
+  </div>
+
+  <div class="grid-wrap" id="grid-wrap" style="display:none;"><div class="game-grid" id="game-grid"></div></div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toast-icon">✓</div>
+    <div class="toast-body"><div class="toast-title" id="toast-title"></div><div class="toast-sub" id="toast-sub"></div></div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">✕ CLOSE</button>
+      <div class="modal-inner">
+        <div class="modal-left">
+          <div class="modal-cover-wrap">
+            <img class="modal-cover" id="modal-cover" src="" alt=""/>
+            <div class="modal-cover-ph" id="modal-cover-ph">NO COVER</div>
+          </div>
+          <div class="modal-meta" id="modal-meta"></div>
+        </div>
+        <div class="modal-right">
+          <div class="modal-number" id="modal-number"></div>
+          <div class="modal-title-wrap">
+            <div class="modal-title" id="modal-title"></div>
+            <button class="icon-btn" id="edit-title-btn">✎</button>
+          </div>
+          <div class="modal-slash"></div>
+          <div class="modal-genre" id="modal-genre"></div>
+          <div class="modal-desc" id="modal-desc"></div>
+          <div class="review-section" id="review-section">
+            <div class="review-label">// YOUR REVIEW</div>
+            <div class="star-row">
+              <span class="star" data-val="1">★</span><span class="star" data-val="2">★</span>
+              <span class="star" data-val="3">★</span><span class="star" data-val="4">★</span>
+              <span class="star" data-val="5">★</span><span class="star" data-val="6">★</span>
+              <span class="star" data-val="7">★</span><span class="star" data-val="8">★</span>
+              <span class="star" data-val="9">★</span><span class="star" data-val="10">★</span>
+            </div>
+            <textarea class="review-input" id="review-input" placeholder="WRITE YOUR VERDICT..."></textarea>
+            <textarea class="review-input" id="comments-input" placeholder="COMMENTS / REPLAYABILITY..." style="min-height:48px;margin-top:6px;"></textarea>
+            <label class="laali-check-row"><input type="checkbox" id="told-laali-check"/><span class="laali-check-box"></span><span class="laali-check-label">TOLD LAALI ABOUT IT</span></label>
+            <button class="btn-primary" id="btn-save-review">SAVE REVIEW</button>
+            <div class="save-confirm" id="save-confirm">SAVED ✓</div>
+          </div>
+          <button class="btn-delete" id="btn-delete-game">🗑 DELETE FROM ARCHIVE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT TITLE MODAL -->
+  <div class="modal-overlay" id="edit-title-overlay">
+    <div class="modal modal-sm">
+      <button class="modal-close" id="edit-title-close">✕</button>
+      <div class="sm-title">EDIT GAME NAME</div><div class="sm-slash"></div>
+      <input class="field-input" id="edit-title-input" type="text" placeholder="GAME TITLE..."/>
+      <button class="btn-primary" id="btn-save-title">SAVE</button>
+    </div>
+  </div>
+
+  <!-- ADD GAME MODAL -->
+  <div class="modal-overlay" id="add-overlay">
+    <div class="modal modal-sm">
+      <button class="modal-close" id="add-close">✕</button>
+      <div class="sm-title">ADD TO ARCHIVE</div><div class="sm-slash"></div>
+      <div class="add-tabs">
+        <button class="add-tab active" data-addtab="completed">COMPLETED</button>
+        <button class="add-tab" data-addtab="backlog">BACKLOG</button>
+        <button class="add-tab" data-addtab="ours">OUR GAMES</button>
+      </div>
+      <input class="field-input" id="add-name" type="text" placeholder="SEARCH GAME TITLE..."/>
+      <div class="igdb-results" id="igdb-results"></div>
+      <div class="manual-add" id="manual-add" style="display:none;">
+        <input class="field-input" id="add-year" type="text" placeholder="RELEASE YEAR"/>
+        <input class="field-input" id="add-genre" type="text" placeholder="GENRE"/>
+        <input class="field-input" id="add-dev" type="text" placeholder="DEVELOPER"/>
+        <button class="btn-primary" id="btn-manual-add">ADD MANUALLY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT NAME MODAL -->
+  <div class="modal-overlay" id="edit-name-overlay">
+    <div class="modal modal-sm">
+      <button class="modal-close" id="edit-name-close">✕</button>
+      <div class="sm-title">EDIT ARCHIVE NAME</div><div class="sm-slash"></div>
+      <input class="field-input" id="edit-name-input" type="text" placeholder="NAME..."/>
+      <button class="btn-primary" id="btn-save-name">SAVE</button>
+    </div>
+  </div>
+
+  <script type="module">
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBv3qhh0vW8DlRQk-o7k52Lb8Cz-5-B77M",
+      authDomain: "game-archive-8fd9e.firebaseapp.com",
+      projectId: "game-archive-8fd9e",
+      storageBucket: "game-archive-8fd9e.firebasestorage.app",
+      messagingSenderId: "14433265671",
+      appId: "1:14433265671:web:5dbfc2c3a0e3147e1622a2"
+    };
+
+    const IGDB = '/api/igdb';
+
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, orderBy, query, getDoc, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    let completedGames = [], backlogGames = [], oursGames = [];
+    let activeTab = 'completed', activeFilter = 'all', activeSort = 'number', reviewedFilter = false;
+    let searchQuery = '', currentId = null, currentRating = 0, addTab = 'completed', gridMode = false;
+    let raf = null;
+
+    // DOM refs
+    const shelfEl       = document.getElementById('game-shelf');
+    const thumbEl       = document.getElementById('shelf-thumb');
+    const gridEl        = document.getElementById('game-grid');
+    const gridWrapEl    = document.getElementById('grid-wrap');
+    const shelfWrapEl   = document.querySelector('.shelf-wrap');
+    const totalEl       = document.getElementById('total-count');
+    const backlogEl     = document.getElementById('backlog-count');
+    const reviewedEl    = document.getElementById('reviewed-count');
+    const genreBarEl    = document.getElementById('genre-bar');
+    const pillsEl       = document.getElementById('filter-pills');
+    const searchEl      = document.getElementById('search-input');
+    const sortEl        = document.getElementById('sort-select');
+    const nameImg       = document.getElementById('archive-name');
+    const toastEl       = document.getElementById('toast');
+    const xpWrap        = document.getElementById('xp-bar-wrap');
+    const xpFill        = document.getElementById('xp-fill');
+    const overlay       = document.getElementById('modal-overlay');
+    const modalClose    = document.getElementById('modal-close');
+    const modalCover    = document.getElementById('modal-cover');
+    const modalCoverPh  = document.getElementById('modal-cover-ph');
+    const modalNumber   = document.getElementById('modal-number');
+    const modalTitle    = document.getElementById('modal-title');
+    const modalGenre    = document.getElementById('modal-genre');
+    const modalDesc     = document.getElementById('modal-desc');
+    const modalMeta     = document.getElementById('modal-meta');
+    const reviewInput   = document.getElementById('review-input');
+    const commentsInput = document.getElementById('comments-input');
+    const btnSave       = document.getElementById('btn-save-review');
+    const saveConfirm   = document.getElementById('save-confirm');
+    const reviewSection = document.getElementById('review-section');
+    const stars         = document.querySelectorAll('.star');
+    const editTitleBtn  = document.getElementById('edit-title-btn');
+
+    // ── FRAME SCRUBBER BACKGROUND ─────────────
+    const FRAMES = Array.from({length: 50}, (_, i) => `frames/${String(i+1).padStart(3,'0')}.jpg`);
+    const frameCanvas = document.getElementById('frame-canvas');
+    const fctx = frameCanvas.getContext('2d');
+    let currentFrame = 0, targetFrame = 0, frameImages = [], framesLoaded = 0;
+    let allFramesLoaded = false, justFinishedLoading = false;
+    let frameDPR = window.devicePixelRatio || 1;
+    let curMouseXf = 0, curMouseYf = 0; // for subtle parallax offset in the frame draw
+
+    function resizeFrameCanvas() {
+      frameDPR = Math.min(window.devicePixelRatio || 1, 2.5);
+      frameCanvas.width = Math.round(window.innerWidth * frameDPR);
+      frameCanvas.height = Math.round(window.innerHeight * frameDPR);
+      fctx.setTransform(frameDPR, 0, 0, frameDPR, 0, 0);
+      fctx.imageSmoothingEnabled = true;
+      fctx.imageSmoothingQuality = 'high';
+      drawFrame(currentFrame);
+    }
+    resizeFrameCanvas();
+    window.addEventListener('resize', resizeFrameCanvas);
+
+    // Load frames strictly in order, one at a time — this guarantees frame 5
+    // is never available before frame 4, so there's no possibility of frames
+    // arriving out of sequence. While loading, the scrubber still responds
+    // immediately using whatever's loaded so far — if you scroll ahead of
+    // what's ready, it clamps to the furthest frame actually loaded (never
+    // freezes, never jumps backward to an earlier frame), so it always reads
+    // as smooth forward progress instead of getting stuck.
+    async function preloadFrames() {
+      for (let i = 0; i < FRAMES.length; i++) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.onload = () => {
+            frameImages[i] = img;
+            framesLoaded = i + 1;
+            if (i === 0) drawFrame(0);
+            resolve();
+          };
+          img.onerror = resolve; // don't let one bad frame stall the rest
+          img.src = FRAMES[i];
+        });
+      }
+      allFramesLoaded = true;
+    }
+    preloadFrames();
+
+    function drawFrame(pos) {
+      const maxLoadedIdx = framesLoaded - 1;
+      if (maxLoadedIdx < 0) return; // nothing loaded yet
+      let i0 = Math.round(Math.max(0, Math.min(pos, FRAMES.length - 1)));
+      if (i0 > maxLoadedIdx) i0 = maxLoadedIdx; // clamp to furthest loaded frame, never show a gap
+      const imgA = frameImages[i0];
+      if (!fctx || !imgA) return;
+      const cw = window.innerWidth, ch = window.innerHeight;
+      const scale = Math.max(cw / imgA.width, ch / imgA.height) * 1.08;
+      const dw = imgA.width * scale, dh = imgA.height * scale;
+      const ox = (cw - dw) / 2 + (curMouseXf / cw - 0.5) * -18;
+      const oy = (ch - dh) / 2 + (curMouseYf / ch - 0.5) * -10;
+      fctx.clearRect(0, 0, cw, ch);
+      fctx.globalAlpha = 1;
+      fctx.drawImage(imgA, ox, oy, dw, dh);
+    }
+
+    (function frameLoop() {
+      currentFrame += (targetFrame - currentFrame) * 0.35;
+      if (Math.abs(targetFrame - currentFrame) < 0.05) currentFrame = targetFrame;
+      drawFrame(currentFrame);
+      requestAnimationFrame(frameLoop);
+    })();
+
+    let maxScrollLeftSeen = 0;
+    const FRAME_DEBUG = false; // flip to true in devtools console to see live scroll/frame numbers
+
+    // Distance-based, endlessly bouncing (ping-pong) frame mapping.
+    // Instead of stretching all 50 frames across the *entire* shelf width
+    // (which is however long the games list happens to be, and grows as
+    // more games are added), we advance one frame every PX_PER_FRAME
+    // pixels of scroll, then play that sequence forward → backward →
+    // forward forever. Because it reverses smoothly at each end instead
+    // of jump-cutting frame 50 back to frame 1, there's never a visible
+    // discontinuity, no matter how many games are in the list.
+    const PX_PER_FRAME = 120; // tune: smaller = faster frame cycling per pixel scrolled
+    const oneWaySweepPx = (FRAMES.length - 1) * PX_PER_FRAME;
+    const pingPongPeriodPx = oneWaySweepPx * 2;
+
+    function pingPongFramePosition(distancePx) {
+      let d = distancePx % pingPongPeriodPx;
+      if (d < 0) d += pingPongPeriodPx;
+      return d <= oneWaySweepPx
+        ? d / PX_PER_FRAME                          // forward leg: 0 → 49
+        : (pingPongPeriodPx - d) / PX_PER_FRAME;     // return leg: 49 → 0
+    }
+
+    // Momentum/inertial scrolling (trackpads especially) fires a burst of
+    // tiny backward scrollLeft readings as it decelerates and settles, even
+    // while you're still net scrolling forward. Counting *events* to filter
+    // that out is unreliable — momentum can easily produce 3+ tiny backward
+    // events, which briefly snapped the frame back before correcting itself.
+    // A distance dead-zone is more robust: any backward wobble smaller than
+    // BACKWARD_CONFIRM_PX is ignored outright, no matter how many events it
+    // spans, and only a move that actually clears that gap counts as a real
+    // intentional backward scroll.
+    const BACKWARD_CONFIRM_PX = 40; // tune: raise if flicker persists, lower if backward scroll feels laggy
+
+    function updateFrameFromScroll() {
+      const maxScroll = shelfEl.scrollWidth - shelfEl.clientWidth;
+      if (maxScroll <= 0) return;
+      const raw = shelfEl.scrollLeft;
+
+      if (raw > maxScrollLeftSeen) {
+        maxScrollLeftSeen = raw; // new furthest point — always accepted
+      } else if (maxScrollLeftSeen - raw > BACKWARD_CONFIRM_PX) {
+        maxScrollLeftSeen = raw; // dropped past the noise band — genuine backward scroll
+      } else {
+        if (window.FRAME_DEBUG) console.log('[frame] ignoring backward wobble', {raw, maxScrollLeftSeen, gap: maxScrollLeftSeen - raw});
+        return; // within the dead-zone — treat as momentum noise, hold position
+      }
+
+      targetFrame = pingPongFramePosition(maxScrollLeftSeen);
+      if (window.FRAME_DEBUG) console.log('[frame] raw:', raw, 'maxScrollLeftSeen:', maxScrollLeftSeen, 'targetFrame:', targetFrame.toFixed(2), 'currentFrame:', currentFrame.toFixed(2));
+    }
+    document.addEventListener('mousemove', e => { curMouseXf = e.clientX; curMouseYf = e.clientY; });
+
+    // ── CURSOR EMBER TRAIL ────────────────────
+    const canvas = document.getElementById('trail-canvas');
+    const ctx    = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    document.addEventListener('mousemove', e => {
+      for (let i = 0; i < 2; i++) {
+        particles.push({
+          x: e.clientX + (Math.random()-0.5)*5,
+          y: e.clientY + (Math.random()-0.5)*5,
+          life: 1,
+          size: Math.random()*1.4+0.7,
+          vx: (Math.random()-0.5)*0.6,
+          vy: -Math.random()*0.9 - 0.2, // embers drift upward, not randomly in all directions
+          hue: 10 + Math.random()*25,
+          flicker: Math.random()*Math.PI*2
+        });
+      }
+      if (particles.length > 90) particles = particles.slice(-90);
+    });
+
+    function animateTrail() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles = particles.filter(p => p.life > 0.01);
+      particles.forEach(p => {
+        p.life -= 0.022;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy -= 0.006; // gentle upward acceleration, like real embers
+        p.flicker += 0.15;
+        const flick = 0.8 + Math.sin(p.flicker)*0.2;
+        const a = p.life * 0.65 * flick;
+        const r = Math.max(0.1, p.size * p.life);
+        ctx.fillStyle = `hsl(${p.hue}, 95%, 58%)`;
+        // cheap soft glow: wide faint circle + small bright core (no shadowBlur)
+        ctx.globalAlpha = a * 0.35;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r*2.2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = a;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(animateTrail);
+    }
+    animateTrail();
+
+    // ── AMBIENT EMBER RAIN ────────────────────
+    const emberCanvas = document.getElementById('ember-canvas');
+    const ectx = emberCanvas ? emberCanvas.getContext('2d') : null;
+    if (emberCanvas) { emberCanvas.width=innerWidth; emberCanvas.height=innerHeight; window.addEventListener('resize',()=>{emberCanvas.width=innerWidth;emberCanvas.height=innerHeight;}); }
+    const embers = [];
+    const EMBER_COUNT = 26;
+    function newEmber(randomY) {
+      const depth = Math.random();
+      return {
+        x: Math.random() * innerWidth,
+        y: randomY ? Math.random() * innerHeight : innerHeight + 10,
+        size: 0.8 + depth * 3.5,
+        speed: 0.3 + depth * 1.2,
+        drift: (Math.random() - 0.5) * 0.4,
+        opacity: 0.15 + depth * 0.55,
+        hue: 15 + Math.random() * 25,
+        depth,
+        flicker: Math.random() * Math.PI * 2
+      };
+    }
+    function initEmbers() { for (let i=0;i<EMBER_COUNT;i++) embers.push(newEmber(true)); }
+    (function emberLoop() {
+      if (!ectx) { requestAnimationFrame(emberLoop); return; }
+      ectx.clearRect(0, 0, emberCanvas.width, emberCanvas.height);
+      embers.forEach((e, i) => {
+        e.y -= e.speed;
+        e.x += e.drift;
+        e.flicker += 0.04;
+        const flick = 0.85 + Math.sin(e.flicker) * 0.15;
+        if (e.y < -10) embers[i] = newEmber(false);
+        const a = e.opacity * flick, r = Math.max(0.1, e.size * flick);
+        ectx.fillStyle = `hsl(${e.hue}, 95%, 60%)`;
+        ectx.globalAlpha = a * 0.35;
+        ectx.beginPath();
+        ectx.arc(e.x, e.y, r * 2.2, 0, Math.PI*2);
+        ectx.fill();
+        ectx.globalAlpha = a;
+        ectx.beginPath();
+        ectx.arc(e.x, e.y, r, 0, Math.PI*2);
+        ectx.fill();
+      });
+      ectx.globalAlpha = 1;
+      requestAnimationFrame(emberLoop);
+    })();
+    initEmbers();
+
+    // ── TITLE PARALLAX ────────────────────────
+    let mouseX=0, mouseY=0, curMouseX=0, curMouseY=0;
+    document.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; });
+    (function parallaxLoop(){
+      curMouseX += (mouseX-curMouseX)*0.06;
+      curMouseY += (mouseY-curMouseY)*0.06;
+      const cx=(curMouseX/innerWidth-0.5)*2;
+      const cy=(curMouseY/innerHeight-0.5)*2;
+      const heroMain=document.querySelector('.hero-img');
+      const heroAccentEl=document.querySelector('.hero-accent');
+      if(heroMain) heroMain.style.transform=`scale(1.02) translate(${cx*-8}px,${cy*-4}px)`;
+      if(heroAccentEl) heroAccentEl.style.transform=`translate(${cx*-14}px,${cy*-7}px)`;
+      requestAnimationFrame(parallaxLoop);
+    })();
+
+    // ── SOUND ────────────────────────────────
+    let soundEnabled = false;
+    const muteBtn = document.getElementById('mute-btn');
+    const bgMusic = document.getElementById('bg-music');
+    bgMusic.volume = 0.4;
+    bgMusic.preload = 'auto';
+    bgMusic.load();
+    muteBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      muteBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      if (soundEnabled) {
+        bgMusic.play().then(() => {
+          console.log('bg music playing, readyState:', bgMusic.readyState, 'duration:', bgMusic.duration);
+        }).catch(err => {
+          console.error('bg music failed to play:', err.name, err.message);
+        });
+      } else {
+        bgMusic.pause();
+      }
+    });
+
+    // ── HIDDEN MESSAGE ───────────────────────
+    const easterDot = document.getElementById('easter-dot');
+    const easterOverlay = document.getElementById('easter-overlay');
+    if (easterDot && easterOverlay) {
+      easterDot.addEventListener('click', () => {
+        easterOverlay.classList.add('active');
+        setTimeout(() => easterOverlay.classList.remove('active'), 4000);
+      });
+      easterOverlay.addEventListener('click', () => easterOverlay.classList.remove('active'));
+    }
+
+    function playClick() {
+      if (!soundEnabled) return;
+      try {
+        const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx2.createOscillator();
+        const gain = ctx2.createGain();
+        osc.connect(gain); gain.connect(ctx2.destination);
+        osc.frequency.setValueAtTime(800, ctx2.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ctx2.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.08, ctx2.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx2.currentTime + 0.08);
+        osc.start(); osc.stop(ctx2.currentTime + 0.08);
+      } catch(e) {}
+    }
+
+    function playHover() {
+      if (!soundEnabled) return;
+      try {
+        const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx2.createOscillator();
+        const gain = ctx2.createGain();
+        osc.connect(gain); gain.connect(ctx2.destination);
+        osc.frequency.setValueAtTime(600, ctx2.currentTime);
+        gain.gain.setValueAtTime(0.03, ctx2.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx2.currentTime + 0.04);
+        osc.start(); osc.stop(ctx2.currentTime + 0.04);
+      } catch(e) {}
+    }
+
+    // ── TOAST ────────────────────────────────
+    function showToast(title, sub='', icon='✓') {
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-sub').textContent = sub;
+      document.getElementById('toast-icon').textContent = icon;
+      toastEl.classList.add('show');
+      setTimeout(() => toastEl.classList.remove('show'), 3000);
+    }
+
+    // ── XP LOADING BAR ───────────────────────
+    function showXP() {
+      xpWrap.style.opacity = '1';
+      xpFill.style.width = '0%';
+      let pct = 0;
+      const interval = setInterval(() => {
+        pct += Math.random() * 8 + 2;
+        if (pct >= 100) { pct = 100; clearInterval(interval); setTimeout(() => { xpWrap.style.opacity = '0'; }, 400); }
+        xpFill.style.width = pct + '%';
+      }, 80);
+    }
+
+    // ── COUNT UP ANIMATION ───────────────────
+    function countUp(el, target) {
+      let current = 0;
+      const step = Math.ceil(target / 30);
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = current;
+        if (current >= target) clearInterval(timer);
+      }, 30);
+    }
+
+    // ── ARCHIVE NAME ─────────────────────────
+    nameImg.addEventListener('click', () => {
+      document.getElementById('edit-name-overlay').classList.add('active');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('edit-name-input').focus(), 100);
+      playClick();
+    });
+
+    document.getElementById('edit-name-close').addEventListener('click', () => { document.getElementById('edit-name-overlay').classList.remove('active'); document.body.style.overflow = ''; });
+    document.getElementById('edit-name-overlay').addEventListener('click', e => { if (e.target === document.getElementById('edit-name-overlay')) { document.getElementById('edit-name-overlay').classList.remove('active'); document.body.style.overflow = ''; } });
+    document.getElementById('btn-save-name').addEventListener('click', async () => {
+      const name = document.getElementById('edit-name-input').value.trim();
+      if (!name) return;
+      await setDoc(doc(db,'meta','archive'), {name});
+      document.title = name + "'S GAME ARCHIVE";
+      document.getElementById('edit-name-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+      showToast('Archive name updated', '', '✎');
+      playClick();
+    });
+
+    // ── LOAD GAMES ───────────────────────────
+    async function loadAll() {
+      showXP();
+      try {
+        const [cSnap, bSnap] = await Promise.all([
+          getDocs(query(collection(db,'games'), orderBy('number'))),
+          getDocs(query(collection(db,'backlog'), orderBy('number')))
+        ]);
+        completedGames = cSnap.docs.map(d => ({id:d.id,...d.data()}));
+        backlogGames   = bSnap.docs.map(d => ({id:d.id,...d.data()}));
+        try {
+          const oSnap = await getDocs(query(collection(db,'ours'), orderBy('number')));
+          oursGames = oSnap.docs.map(d => ({id:d.id,...d.data()}));
+        } catch(e) { oursGames = []; console.log('ours collection empty or not created yet'); }
+        updateCounts();
+        buildGenreBar();
+        buildPills();
+        renderCurrentView();
+      } catch(e) {
+        shelfEl.innerHTML = '<div class="empty" style="color:#e01f1f;">FAILED TO LOAD. CHECK CONSOLE.</div>';
+        console.error(e);
+      }
+    }
+
+    function updateCounts() {
+      countUp(totalEl, completedGames.length);
+      countUp(backlogEl, backlogGames.length);
+      countUp(reviewedEl, completedGames.filter(g=>g.review).length);
+    }
+
+    // ── TABS ─────────────────────────────────
+    let lastTabIndex = 0;
+    const tabOrder = ['completed','backlog','ours'];
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTab = btn.dataset.tab;
+        activeFilter = 'all'; searchQuery = ''; searchEl.value = ''; sortEl.value = 'number'; activeSort = 'number';
+        reviewedFilter = false;
+        document.getElementById('reviewed-stat').classList.remove('stat-active');
+        maxScrollLeftSeen = 0;
+        targetFrame = 0;
+        currentFrame = 0;
+
+        // fly transition: direction depends on which tab we're moving toward
+        const newIndex = tabOrder.indexOf(activeTab);
+        const dir = newIndex >= lastTabIndex ? 1 : -1; // 1 = moving right (fly out left), -1 = moving left (fly out right)
+        lastTabIndex = newIndex;
+
+        shelfEl.style.transition = 'opacity 0.22s var(--ease), transform 0.22s var(--ease)';
+        shelfEl.style.opacity = '0';
+        shelfEl.style.transform = `translateX(${dir * -60}px)`;
+        setTimeout(() => {
+          buildGenreBar(); buildPills(); renderCurrentView();
+          shelfEl.style.transition = 'none';
+          shelfEl.style.transform = `translateX(${dir * 60}px)`;
+          // force reflow so the browser registers the start position before animating in
+          void shelfEl.offsetWidth;
+          shelfEl.style.transition = 'opacity 0.28s var(--ease), transform 0.28s var(--ease)';
+          shelfEl.style.opacity = '1';
+          shelfEl.style.transform = 'translateX(0)';
+        }, 220);
+        playClick();
+      });
+    });
+
+    // ── GENRE BAR ────────────────────────────
+    function buildGenreBar() {
+      const games = activeTab === 'completed' ? completedGames : activeTab === 'backlog' ? backlogGames : oursGames;
+      const counts = {};
+      games.forEach(g => { const genre=(g.genre||'unknown').split('·')[0].trim().toLowerCase(); counts[genre]=(counts[genre]||0)+1; });
+      const total = games.length || 1;
+      genreBarEl.innerHTML = '';
+      Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6).forEach(([,count]) => {
+        const seg=document.createElement('div'); seg.className='genre-seg'; seg.style.width=(count/total*100).toFixed(1)+'%'; genreBarEl.appendChild(seg);
+      });
+    }
+
+    // ── PILLS ────────────────────────────────
+    function buildPills() {
+      const games = activeTab === 'completed' ? completedGames : activeTab === 'backlog' ? backlogGames : oursGames;
+      const genres = [...new Set(games.map(g=>(g.genre||'').split('·')[0].trim().toLowerCase()).filter(Boolean))].sort();
+      pillsEl.innerHTML = '<button class="pill active" data-filter="all">ALL</button>';
+      genres.slice(0,8).forEach(genre => {
+        const btn=document.createElement('button'); btn.className='pill'; btn.dataset.filter=genre; btn.textContent=genre.toUpperCase(); pillsEl.appendChild(btn);
+      });
+      pillsEl.querySelectorAll('.pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pillsEl.querySelectorAll('.pill').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+          activeFilter=btn.dataset.filter; renderCurrentView(); playClick();
+        });
+      });
+    }
+
+    document.getElementById('reviewed-stat').addEventListener('click', () => {
+      reviewedFilter = !reviewedFilter;
+      const statEl = document.getElementById('reviewed-stat');
+      if (reviewedFilter) {
+        statEl.classList.add('stat-active');
+        if (activeTab !== 'completed') {
+          document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+          document.querySelector('.tab[data-tab="completed"]').classList.add('active');
+          activeTab = 'completed';
+          lastTabIndex = tabOrder.indexOf('completed');
+        }
+        activeFilter = 'all'; searchQuery = ''; searchEl.value = '';
+        buildGenreBar(); buildPills();
+      } else {
+        statEl.classList.remove('stat-active');
+      }
+      renderCurrentView();
+      playClick();
+    });
+
+    // ── RENDER SHELF ─────────────────────────
+    function getFilteredGames() {
+      let games = activeTab==='completed' ? [...completedGames] : activeTab==='backlog' ? [...backlogGames] : [...oursGames];
+      if (activeFilter!=='all') games=games.filter(g=>(g.genre||'').toLowerCase().includes(activeFilter));
+      if (searchQuery) games=games.filter(g=>g.title.toLowerCase().includes(searchQuery.toLowerCase()));
+      if (reviewedFilter && activeTab==='completed') games=games.filter(g=>!!g.review);
+      if (activeSort==='alpha')      games.sort((a,b)=>a.title.localeCompare(b.title));
+      if (activeSort==='rating')     games.sort((a,b)=>(b.rating||0)-(a.rating||0));
+      if (activeSort==='metacritic') games.sort((a,b)=>(b.metacritic||0)-(a.metacritic||0));
+      return games;
+    }
+
+    function renderCurrentView() { gridMode ? renderGrid(getFilteredGames()) : renderShelf(); }
+
+    function renderShelf() {
+      let games = getFilteredGames();
+
+      shelfEl.innerHTML = '';
+      if (!games.length) { shelfEl.innerHTML='<div class="empty">NO ENTRIES FOUND.</div>'; return; }
+
+      games.forEach((game, i) => {
+        const card = buildCard(game, i, false);
+        shelfEl.appendChild(card);
+      });
+
+      // Staggered entrance
+      const cards = shelfEl.querySelectorAll('.shelf-card');
+      cards.forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(24px) scale(0.92)';
+        card.style.filter = 'blur(4px)';
+        setTimeout(() => {
+          card.style.transition = 'opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1), filter 0.5s cubic-bezier(0.16,1,0.3,1)';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0) scale(1)';
+          card.style.filter = 'blur(0px)';
+        }, i * 40);
+      });
+
+      setTimeout(applyConvex, 200);
+      updateScrollbar();
+    }
+
+    function renderGrid(games) {
+      gridEl.innerHTML = '';
+      if (!games.length) { gridEl.innerHTML='<div class="empty">NO ENTRIES FOUND.</div>'; return; }
+      games.forEach((game, i) => {
+        const card = buildCard(game, i, true);
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(16px) scale(0.94)';
+        card.style.filter = 'blur(3px)';
+        gridEl.appendChild(card);
+        setTimeout(() => {
+          card.style.transition = 'opacity .4s cubic-bezier(.16,1,.3,1), transform .4s cubic-bezier(.16,1,.3,1), filter .4s cubic-bezier(.16,1,.3,1)';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0) scale(1)';
+          card.style.filter = 'blur(0px)';
+        }, i * 25);
+      });
+    }
+
+    document.getElementById('btn-grid').addEventListener('click', () => {
+      gridMode = !gridMode;
+      const btn = document.getElementById('btn-grid');
+      if (gridMode) {
+        shelfWrapEl.style.display = 'none';
+        gridWrapEl.style.display = 'block';
+        renderGrid(getFilteredGames());
+        btn.textContent = '≡';
+      } else {
+        shelfWrapEl.style.display = 'block';
+        gridWrapEl.style.display = 'none';
+        renderCurrentView();
+        btn.textContent = '⊞';
+      }
+      playClick();
+    });
+
+    // ── BUILD CARD ───────────────────────────
+    function buildCard(game, index, isGrid) {
+      const card = document.createElement('div');
+      card.className = isGrid ? 'grid-card' : 'shelf-card';
+      card.dataset.id = game.id;
+
+      const ratingBadge = game.rating ? `<div class="card-badge">${game.rating}/10</div>` : '';
+      const metaBadge   = game.metacritic ? `<div class="card-meta" style="background:${metacriticColor(game.metacritic)}">${game.metacritic}</div>` : '';
+      const reviewDot   = game.review ? '<div class="card-dot"></div>' : '';
+      const playingDot  = game.status==='Playing' ? '<div class="card-playing-dot" title="Currently Playing"></div>' : '';
+      const hltb        = game.hltb ? `<span class="card-hltb">${game.hltb}</span>` : '';
+
+      card.innerHTML = `
+        <div class="card-inner">
+          <div class="card-cover-wrap">
+            ${game.coverUrl
+              ? `<img class="card-cover" src="${game.coverUrl}" alt="${game.title}" loading="lazy"/>`
+              : `<div class="card-no-art">NO ART</div>`
+            }
+            <div class="card-spotlight"></div>
+            <div class="card-reveal">
+              <div class="card-reveal-num">//${String(game.number||index+1).padStart(3,'0')}</div>
+              <div class="card-reveal-name">${game.title}</div>
+              <div class="card-reveal-cta">VIEW ENTRY ›</div>
+            </div>
+            ${ratingBadge}${metaBadge}${reviewDot}${playingDot}
+          </div>
+          <div class="card-body">
+            <div class="card-num">//${String(game.number||index+1).padStart(3,'0')}</div>
+            <div class="card-name">${game.title}</div>
+            <div class="card-foot">
+              <span class="card-genre">${(game.genre||'—').split('·')[0].trim().toUpperCase()}</span>
+              ${hltb}
+            </div>
+          </div>
+        </div>
+        <div class="card-floor-glow"></div>
+      `;
+
+      const inner    = card.querySelector('.card-inner');
+      const spotlight = card.querySelector('.card-spotlight');
+      const floorGlow = card.querySelector('.card-floor-glow');
+      let rafId;
+
+      card.addEventListener('mouseenter', () => { playHover(); if (floorGlow) floorGlow.style.opacity='1'; });
+
+      card.addEventListener('mousemove', e => {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          const r   = card.getBoundingClientRect();
+          const x   = e.clientX - r.left;
+          const y   = e.clientY - r.top;
+          const cx  = (x - r.width/2)  / (r.width/2);
+          const cy  = (y - r.height/2) / (r.height/2);
+
+          // 3D tilt
+          inner.style.transform = `perspective(700px) rotateY(${cx*10}deg) rotateX(${-cy*6}deg) translateY(-20px) scale(1.06)`;
+          inner.style.boxShadow = `${-cx*8}px ${-cy*4}px 40px rgba(224,31,31,0.25), 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px #e01f1f`;
+
+          // Spotlight
+          spotlight.style.background = `radial-gradient(circle 120px at ${x}px ${y}px, rgba(224,31,31,0.3) 0%, transparent 70%)`;
+        });
+      });
+
+      card.addEventListener('mouseleave', () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        inner.style.transform = '';
+        inner.style.boxShadow = '';
+        spotlight.style.background = 'none';
+        if (floorGlow) floorGlow.style.opacity='0';
+      });
+
+      card.addEventListener('click', () => { openModal(game); playClick(); });
+      return card;
+    }
+
+    function metacriticColor(s) {
+      if (s >= 90) return '#2d6e2d';
+      if (s >= 75) return '#4a7a2a';
+      if (s >= 60) return '#7a6a15';
+      return '#7a1515';
+    }
+
+    // ── CONVEX SHELF ─────────────────────────
+    function applyConvex() {
+      const cards  = shelfEl.querySelectorAll('.shelf-card');
+      const center = shelfEl.scrollLeft + shelfEl.clientWidth / 2;
+      const halfW  = shelfEl.clientWidth * 0.5;
+      cards.forEach(card => {
+        const cc     = card.offsetLeft + card.offsetWidth / 2;
+        const signedDist = center - cc; // negative = card is right of center, positive = left of center
+        const dist   = Math.abs(signedDist);
+        const norm   = Math.min(dist / halfW, 1);
+        const ty     = norm * norm * 26;
+        const sc     = 1 - norm * 0.09;
+        // curved-carousel tilt: cards angle toward the viewer based on how far
+        // they sit from center, like they're arranged along a convex shelf
+        const rotY   = (signedDist / halfW) * -12 * (1 - norm * 0.3);
+        if (!card.matches(':hover')) {
+          card.querySelector('.card-inner').style.transform = `perspective(1000px) rotateY(${rotY}deg) translateY(${ty}px) scale(${sc})`;
+        }
+      });
+    }
+
+    // ── SCROLLBAR ────────────────────────────
+    function updateScrollbar() {
+      const track = document.querySelector('.scrollbar-track');
+      if (!track) return;
+      const pct    = shelfEl.scrollLeft / Math.max(1, shelfEl.scrollWidth - shelfEl.clientWidth);
+      const trackW = track.clientWidth;
+      const thumbW = thumbEl.clientWidth;
+      thumbEl.style.transform = `translateX(${pct*(trackW-thumbW)}px)`;
+    }
+
+    shelfEl.addEventListener('scroll', () => {
+      requestAnimationFrame(() => { applyConvex(); updateScrollbar(); updateFrameFromScroll(); });
+    });
+    window.addEventListener('resize', () => { requestAnimationFrame(applyConvex); });
+
+    // ── SHELF SCROLL INPUT ────────────────────
+    // Convert vertical mouse-wheel scrolling into horizontal shelf movement —
+    // without this, a normal mouse (vertical wheel only) cannot scroll the
+    // shelf at all, since it only has horizontal content.
+    shelfEl.addEventListener('wheel', e => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        shelfEl.scrollLeft += e.deltaY;
+      }
+    }, { passive: false });
+
+    // Click-and-drag scrolling for mouse users
+    let isDragging = false, dragStartX = 0, dragScrollStart = 0, dragMoved = false;
+    shelfEl.addEventListener('mousedown', e => {
+      if (e.target.closest('.card-inner')) return;
+      isDragging = true;
+      dragMoved = false;
+      dragStartX = e.pageX;
+      dragScrollStart = shelfEl.scrollLeft;
+      shelfEl.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      const delta = e.pageX - dragStartX;
+      // require a small real movement before engaging — filters out accidental
+      // micro-drags, and means a stray leftover isDragging=true can't silently
+      // hijack scroll position from an otherwise-stationary mouse
+      if (!dragMoved && Math.abs(delta) < 4) return;
+      dragMoved = true;
+      shelfEl.scrollLeft = dragScrollStart - delta;
+    });
+    function endDrag() {
+      isDragging = false;
+      dragMoved = false;
+      shelfEl.style.cursor = 'grab';
+    }
+    document.addEventListener('mouseup', endDrag);
+    // Safety nets: anything that could cause mouseup to never fire must also
+    // reset drag state, otherwise isDragging gets stuck true forever and every
+    // future mousemove on the page (even unrelated to scrolling) will forcibly
+    // override scrollLeft using stale coordinates — this was very likely the
+    // real cause of the shelf jumping backward on its own.
+    window.addEventListener('blur', endDrag);
+    document.addEventListener('mouseleave', endDrag);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) endDrag(); });
+
+    // ── SEARCH + SORT ─────────────────────────
+    searchEl.addEventListener('input', e => { searchQuery=e.target.value.trim(); renderCurrentView(); });
+    sortEl.addEventListener('change',  e => { activeSort=e.target.value; renderCurrentView(); });
+
+    // ── MODAL ────────────────────────────────
+    function openModal(game) {
+      currentId = game.id; currentRating = game.rating||0;
+      const isCompleted = activeTab === 'completed';
+
+      if (game.coverUrl) { modalCover.src=game.coverUrl; modalCover.style.display='block'; modalCoverPh.style.display='none'; }
+      else { modalCover.style.display='none'; modalCoverPh.style.display='flex'; }
+
+      modalNumber.textContent = `//${String(game.number||'').padStart(3,'0')}`;
+      modalTitle.textContent  = game.title;
+      modalGenre.textContent  = (game.genre||'UNKNOWN').toUpperCase();
+      modalDesc.textContent   = game.description||'';
+
+      modalMeta.innerHTML = `
+        ${game.metacritic ? `<div class="meta-row"><span class="meta-label">METACRITIC</span><span class="meta-val" style="color:${metacriticColor(game.metacritic)};font-weight:700;">${game.metacritic}</span></div>` : ''}
+        <div class="meta-row"><span class="meta-label">YEAR</span><span class="meta-val">${game.year||'—'}</span></div>
+        <div class="meta-row"><span class="meta-label">DEV</span><span class="meta-val">${game.developer||'—'}</span></div>
+        <div class="meta-row"><span class="meta-label">PLATFORM</span><span class="meta-val"><input type="text" class="platform-input" id="modal-platform-input" value="${game.platform||''}" placeholder="PS5, PC..."/></span></div>
+        <div class="meta-row"><span class="meta-label">HLTB</span><span class="meta-val">${game.hltb||'—'}</span></div>
+        <div class="meta-row"><span class="meta-label">HOURS PLAYED</span><span class="meta-val"><input type="number" min="0" step="0.5" class="hours-input" id="modal-hours-input" value="${game.hoursPlayed!=null?game.hoursPlayed:''}" placeholder="0"/></span></div>
+        <div class="meta-row"><span class="meta-label">DATE COMPLETED</span><span class="meta-val"><input type="date" class="date-input" id="modal-date-input" value="${game.dateCompleted||''}"/></span></div>
+        <div class="meta-row meta-row-playing"><span class="meta-label">CURRENTLY PLAYING</span><span class="meta-val"><label class="playing-toggle"><input type="checkbox" id="modal-playing-check" ${game.status==='Playing'?'checked':''}/><span class="playing-toggle-dot"></span></label></span></div>
+      `;
+
+      const platformInput = document.getElementById('modal-platform-input');
+      platformInput.addEventListener('change', async () => {
+        if (!currentId) return;
+        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
+        await updateDoc(doc(db,col,currentId), {platform: platformInput.value});
+        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
+        const g = arr.find(x=>x.id===currentId); if (g) g.platform = platformInput.value;
+        showToast('Platform updated','','🎮'); playClick();
+      });
+
+      const dateInput = document.getElementById('modal-date-input');
+      dateInput.addEventListener('change', async () => {
+        if (!currentId) return;
+        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
+        await updateDoc(doc(db,col,currentId), {dateCompleted: dateInput.value});
+        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
+        const g = arr.find(x=>x.id===currentId); if (g) g.dateCompleted = dateInput.value;
+        showToast('Date updated','','📅'); playClick();
+      });
+
+      const hoursInput = document.getElementById('modal-hours-input');
+      hoursInput.addEventListener('change', async () => {
+        const val = hoursInput.value === '' ? null : parseFloat(hoursInput.value);
+        if (!currentId) return;
+        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
+        await updateDoc(doc(db,col,currentId), {hoursPlayed: val});
+        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
+        const g = arr.find(x=>x.id===currentId); if (g) g.hoursPlayed = val;
+        showToast('Hours updated','','⏱'); playClick();
+      });
+
+      const playingCheck = document.getElementById('modal-playing-check');
+      playingCheck.addEventListener('change', async () => {
+        if (!currentId) return;
+        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
+        const newStatus = playingCheck.checked ? 'Playing' : (activeTab==='completed'?'Completed':'To Play');
+        await updateDoc(doc(db,col,currentId), {status: newStatus});
+        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
+        const g = arr.find(x=>x.id===currentId); if (g) g.status = newStatus;
+        renderCurrentView();
+        showToast(playingCheck.checked ? 'Marked as Playing' : 'Unmarked','','▶'); playClick();
+      });
+
+      reviewSection.style.display = isCompleted ? 'flex' : 'none';
+      if (isCompleted) { reviewInput.value=game.review||''; commentsInput.value=game.comments||''; setStars(currentRating); saveConfirm.style.opacity='0'; document.getElementById('told-laali-check').checked = !!game.toldLaali; }
+
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() { overlay.classList.remove('active'); document.body.style.overflow=''; currentId=null; }
+    modalClose.addEventListener('click', () => { closeModal(); playClick(); });
+    overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+
+    // ── EDIT TITLE ───────────────────────────
+    editTitleBtn.addEventListener('click', () => {
+      document.getElementById('edit-title-input').value = modalTitle.textContent;
+      document.getElementById('edit-title-overlay').classList.add('active');
+      setTimeout(() => document.getElementById('edit-title-input').focus(), 100);
+      playClick();
+    });
+    document.getElementById('edit-title-close').addEventListener('click', () => document.getElementById('edit-title-overlay').classList.remove('active'));
+    document.getElementById('edit-title-overlay').addEventListener('click', e => { if(e.target===document.getElementById('edit-title-overlay')) document.getElementById('edit-title-overlay').classList.remove('active'); });
+    document.getElementById('btn-save-title').addEventListener('click', async () => {
+      const t = document.getElementById('edit-title-input').value.trim();
+      if (!t || !currentId) return;
+      const col = activeTab==='completed'?'games':'backlog';
+      await updateDoc(doc(db,col,currentId),{title:t});
+      const arr = activeTab==='completed'?completedGames:backlogGames;
+      const g = arr.find(x=>x.id===currentId); if(g) g.title=t;
+      modalTitle.textContent = t;
+      document.getElementById('edit-title-overlay').classList.remove('active');
+      renderCurrentView(); showToast('Title updated','','✎'); playClick();
+    });
+
+    // ── STARS ────────────────────────────────
+    function setStars(val) { stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.val)<=val)); }
+    stars.forEach(s => {
+      s.addEventListener('click', () => { currentRating=parseInt(s.dataset.val); setStars(currentRating); playClick(); });
+      s.addEventListener('mouseover', () => setStars(parseInt(s.dataset.val)));
+      s.addEventListener('mouseout', () => setStars(currentRating));
+    });
+
+    // ── SAVE REVIEW ──────────────────────────
+    btnSave.addEventListener('click', async () => {
+      if (!currentId) return;
+      const toldLaali = document.getElementById('told-laali-check').checked;
+      await updateDoc(doc(db,'games',currentId),{review:reviewInput.value,comments:commentsInput.value,rating:currentRating,toldLaali});
+      const g = completedGames.find(x=>x.id===currentId);
+      if(g) { g.review=reviewInput.value; g.comments=commentsInput.value; g.rating=currentRating; g.toldLaali=toldLaali; }
+      saveConfirm.style.opacity='1';
+      setTimeout(()=>saveConfirm.style.opacity='0',2000);
+      updateCounts(); renderCurrentView();
+      showToast('Review saved','Achievement unlocked: Critic','★'); playClick();
+    });
+
+    document.getElementById('btn-delete-game').addEventListener('click', async () => {
+      if (!currentId) return;
+      const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
+      const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
+      const g   = arr.find(x=>x.id===currentId);
+      const title = g ? g.title : 'this game';
+      if (!confirm(`Delete "${title}" from the archive? This can't be undone.`)) return;
+      await deleteDoc(doc(db,col,currentId));
+      const idx = arr.findIndex(x=>x.id===currentId);
+      if (idx > -1) arr.splice(idx,1);
+      closeModal();
+      updateCounts(); buildGenreBar(); buildPills(); renderCurrentView();
+      showToast(title+' removed','','🗑'); playClick();
+    });
+
+    // ── ADD GAME ─────────────────────────────
+    document.getElementById('btn-add-game').addEventListener('click', () => { document.getElementById('add-overlay').classList.add('active'); document.body.style.overflow='hidden'; playClick(); });
+    function closeAdd() { document.getElementById('add-overlay').classList.remove('active'); document.body.style.overflow=''; document.getElementById('add-name').value=''; document.getElementById('igdb-results').innerHTML=''; document.getElementById('manual-add').style.display='none'; }
+    document.getElementById('add-close').addEventListener('click', closeAdd);
+    document.getElementById('add-overlay').addEventListener('click', e => { if(e.target===document.getElementById('add-overlay')) closeAdd(); });
+    document.querySelectorAll('.add-tab').forEach(btn => { btn.addEventListener('click',()=>{ document.querySelectorAll('.add-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); addTab=btn.dataset.addtab; }); });
+
+    let igdbTimer;
+    document.getElementById('add-name').addEventListener('input', () => {
+      clearTimeout(igdbTimer);
+      const q = document.getElementById('add-name').value.trim();
+      if (q.length<2) { document.getElementById('igdb-results').innerHTML=''; return; }
+      igdbTimer = setTimeout(()=>searchIGDB(q), 400);
+    });
+
+    async function searchIGDB(q) {
+      document.getElementById('igdb-results').innerHTML='<div class="igdb-loading">SEARCHING...</div>';
+      try {
+        const res  = await fetch(`${IGDB}?search=${encodeURIComponent(q)}&_=${Date.now()}`);
+        const data = await res.json();
+        if (!data.length) { document.getElementById('igdb-results').innerHTML='<div class="igdb-loading">NO RESULTS. <span class="igdb-link" id="ml">ADD MANUALLY</span></div>'; document.getElementById('ml')?.addEventListener('click',()=>{ document.getElementById('manual-add').style.display='block'; document.getElementById('igdb-results').innerHTML=''; }); return; }
+        document.getElementById('igdb-results').innerHTML='';
+        data.slice(0,30).forEach(g => {
+          const row=document.createElement('div'); row.className='igdb-row';
+          row.innerHTML=`${g.cover?`<img src="https://images.igdb.com/igdb/image/upload/t_cover_small/${g.cover.image_id}.jpg" class="igdb-thumb" alt=""/>`:'<div class="igdb-thumb-ph"></div>'}<div><div class="igdb-name">${g.name}</div><div class="igdb-year">${g.first_release_date?new Date(g.first_release_date*1000).getFullYear():'—'}</div></div>`;
+          row.addEventListener('click',()=>addGame(g));
+          document.getElementById('igdb-results').appendChild(row);
+        });
+      } catch(e) { document.getElementById('igdb-results').innerHTML='<div class="igdb-loading">CONNECTION ERROR.</div>'; }
+    }
+
+    function addTabCol(t){ return t==='completed'?'games':t==='backlog'?'backlog':'ours'; }
+    function addTabArr(t){ return t==='completed'?completedGames:t==='backlog'?backlogGames:oursGames; }
+    function addTabStatus(t){ return t==='completed'?'Completed':t==='backlog'?'To Play':'To Play'; }
+
+    async function addGame(igdbGame) {
+      const col = addTabCol(addTab);
+      const arr = addTabArr(addTab);
+      const n   = arr.length ? Math.max(...arr.map(x=>x.number||0))+1 : 1;
+      const newGame = {
+        number:n, title:igdbGame.name,
+        coverUrl: igdbGame.cover?`https://images.igdb.com/igdb/image/upload/t_cover_big/${igdbGame.cover.image_id}.jpg`:null,
+        genre: igdbGame.genres?.map(g=>g.name).join(' · ')||'',
+        developer: igdbGame.involved_companies?.find(c=>c.developer)?.company?.name||'',
+        year: igdbGame.first_release_date?new Date(igdbGame.first_release_date*1000).getFullYear():null,
+        description: igdbGame.summary||'', review:'', comments:'', rating:0, metacritic:null, hltb:'', platform:'', hoursPlayed:null, status:addTabStatus(addTab)
+      };
+      const ref = await addDoc(collection(db,col),newGame);
+      arr.push({id:ref.id,...newGame});
+      closeAdd(); updateCounts(); buildGenreBar(); buildPills(); renderCurrentView();
+      showToast(newGame.title+' added','New entry unlocked','+'); playClick();
+    }
+
+    document.getElementById('btn-manual-add').addEventListener('click', async () => {
+      const title=document.getElementById('add-name').value.trim(); if(!title) return;
+      const col=addTabCol(addTab), arr=addTabArr(addTab);
+      const n=arr.length?Math.max(...arr.map(x=>x.number||0))+1:1;
+      const newGame={number:n,title,year:parseInt(document.getElementById('add-year').value)||null,genre:document.getElementById('add-genre').value.trim(),developer:document.getElementById('add-dev').value.trim(),coverUrl:null,description:'',review:'',comments:'',rating:0,metacritic:null,hltb:'',platform:'',hoursPlayed:null,status:addTabStatus(addTab)};
+      const ref=await addDoc(collection(db,col),newGame); arr.push({id:ref.id,...newGame});
+      closeAdd(); updateCounts(); buildGenreBar(); buildPills(); renderCurrentView();
+      showToast(title+' added','','+'); playClick();
+    });
+
+    // ── BOOT ─────────────────────────────────
+    loadAll();
+
+  </script>
+</body>
+</html>
