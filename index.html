@@ -290,12 +290,7 @@
     function drawFrame(pos) {
       const maxLoadedIdx = framesLoaded - 1;
       if (maxLoadedIdx < 0) return; // nothing loaded yet
-      // pos may be an unwrapped, ever-increasing value (see frameLoop) —
-      // wrap it into a valid frame index here, in one place, so every
-      // caller can just pass currentFrame/0 without worrying about it.
-      const wrapped = ((pos % FRAMES.length) + FRAMES.length) % FRAMES.length;
-      let i0 = Math.round(wrapped);
-      if (i0 >= FRAMES.length) i0 = 0; // guard the round-up-to-length edge case
+      let i0 = Math.round(Math.max(0, Math.min(pos, FRAMES.length - 1)));
       if (i0 > maxLoadedIdx) i0 = maxLoadedIdx; // clamp to furthest loaded frame, never show a gap
       const imgA = frameImages[i0];
       if (!fctx || !imgA) return;
@@ -312,37 +307,25 @@
     (function frameLoop() {
       currentFrame += (targetFrame - currentFrame) * 0.35;
       if (Math.abs(targetFrame - currentFrame) < 0.05) currentFrame = targetFrame;
-      drawFrame(currentFrame); // currentFrame is unwrapped — drawFrame wraps it internally
+      drawFrame(currentFrame);
       requestAnimationFrame(frameLoop);
     })();
 
     let maxScrollLeftSeen = 0;
     const FRAME_DEBUG = false; // flip to true in devtools console to see live scroll/frame numbers
 
-    // Distance-based forward loop: advance one frame every PX_PER_FRAME
-    // pixels of scroll, and once you've scrolled far enough to pass frame
-    // 50, wrap straight back to frame 1 and keep going — matching what was
-    // actually asked for. (An earlier version made this bounce back and
-    // forth instead, on the theory that a bounce reads better than a cut;
-    // in practice that meant it deliberately played frames backward on
-    // every turnaround, which is exactly the "glitch" being reported —
-    // so that's gone now.)
+    // Frames are stretched proportionally across the *actual* shelf width,
+    // so frame 50 always lines up with the true physical end of your games
+    // list — no matter how long that list is. (A fixed-pixels-per-frame
+    // version was tried instead, but on a long list that meant the whole
+    // 50-frame sequence looped many times over before you ever reached the
+    // real end — which is the "frames repeating" you were seeing. This
+    // proportional version can't do that: it only ever uses up all 50
+    // frames exactly once, right as you reach the end of the list.)
     //
-    // targetFrame itself is left unwrapped (ever-increasing) rather than
-    // wrapped to 0-49 here, specifically so frameLoop's easing above is
-    // always closing a small forward gap and never has to rewind through
-    // the whole sequence to get from e.g. frame 49.8 to frame 0.2.
-    const PX_PER_FRAME = 120; // tune: smaller = faster frame cycling per pixel scrolled
-
-    // Trying to distinguish "real" backward scroll from "noisy" backward
-    // scroll (momentum decay, elastic rubber-band overscroll at the shelf's
-    // edges, etc.) is fragile — rubber-band bounce in particular can easily
-    // be bigger than any dead-zone threshold, so it kept slipping through.
-    // The animation doesn't actually need to track true backward scrolling:
-    // it only needs to track total distance traveled, so it can simply
-    // never go backward. maxScrollLeftSeen is strictly monotonic — it only
-    // ever holds, never decreases — which makes a visible regression
-    // impossible regardless of what's causing the scrollLeft noise.
+    // maxScrollLeftSeen still only ever holds or increases, never decreases
+    // — same monotonic protection as before, so momentum/rubber-band scroll
+    // noise still can't cause a visible backward flicker.
     function updateFrameFromScroll() {
       const maxScroll = shelfEl.scrollWidth - shelfEl.clientWidth;
       if (maxScroll <= 0) return;
@@ -350,8 +333,9 @@
       if (raw <= maxScrollLeftSeen) return; // never move backward — hold position
       maxScrollLeftSeen = raw;
 
-      targetFrame = maxScrollLeftSeen / PX_PER_FRAME; // unwrapped — keeps growing forever
-      if (window.FRAME_DEBUG) console.log('[frame] raw:', raw, 'maxScrollLeftSeen:', maxScrollLeftSeen, 'targetFrame:', targetFrame.toFixed(2), 'currentFrame:', currentFrame.toFixed(2));
+      const pct = Math.min(1, maxScrollLeftSeen / maxScroll);
+      targetFrame = pct * (FRAMES.length - 1);
+      if (window.FRAME_DEBUG) console.log('[frame] raw:', raw, 'maxScrollLeftSeen:', maxScrollLeftSeen, 'maxScroll:', maxScroll, 'targetFrame:', targetFrame.toFixed(2), 'currentFrame:', currentFrame.toFixed(2));
     }
     document.addEventListener('mousemove', e => { curMouseXf = e.clientX; curMouseYf = e.clientY; });
 
