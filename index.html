@@ -290,7 +290,12 @@
     function drawFrame(pos) {
       const maxLoadedIdx = framesLoaded - 1;
       if (maxLoadedIdx < 0) return; // nothing loaded yet
-      let i0 = Math.round(Math.max(0, Math.min(pos, FRAMES.length - 1)));
+      // pos may be an unwrapped, ever-increasing value (see frameLoop) —
+      // wrap it into a valid frame index here, in one place, so every
+      // caller can just pass currentFrame/0 without worrying about it.
+      const wrapped = ((pos % FRAMES.length) + FRAMES.length) % FRAMES.length;
+      let i0 = Math.round(wrapped);
+      if (i0 >= FRAMES.length) i0 = 0; // guard the round-up-to-length edge case
       if (i0 > maxLoadedIdx) i0 = maxLoadedIdx; // clamp to furthest loaded frame, never show a gap
       const imgA = frameImages[i0];
       if (!fctx || !imgA) return;
@@ -307,59 +312,45 @@
     (function frameLoop() {
       currentFrame += (targetFrame - currentFrame) * 0.35;
       if (Math.abs(targetFrame - currentFrame) < 0.05) currentFrame = targetFrame;
-      drawFrame(currentFrame);
+      drawFrame(currentFrame); // currentFrame is unwrapped — drawFrame wraps it internally
       requestAnimationFrame(frameLoop);
     })();
 
     let maxScrollLeftSeen = 0;
     const FRAME_DEBUG = false; // flip to true in devtools console to see live scroll/frame numbers
 
-    // Distance-based, endlessly bouncing (ping-pong) frame mapping.
-    // Instead of stretching all 50 frames across the *entire* shelf width
-    // (which is however long the games list happens to be, and grows as
-    // more games are added), we advance one frame every PX_PER_FRAME
-    // pixels of scroll, then play that sequence forward → backward →
-    // forward forever. Because it reverses smoothly at each end instead
-    // of jump-cutting frame 50 back to frame 1, there's never a visible
-    // discontinuity, no matter how many games are in the list.
+    // Distance-based forward loop: advance one frame every PX_PER_FRAME
+    // pixels of scroll, and once you've scrolled far enough to pass frame
+    // 50, wrap straight back to frame 1 and keep going — matching what was
+    // actually asked for. (An earlier version made this bounce back and
+    // forth instead, on the theory that a bounce reads better than a cut;
+    // in practice that meant it deliberately played frames backward on
+    // every turnaround, which is exactly the "glitch" being reported —
+    // so that's gone now.)
+    //
+    // targetFrame itself is left unwrapped (ever-increasing) rather than
+    // wrapped to 0-49 here, specifically so frameLoop's easing above is
+    // always closing a small forward gap and never has to rewind through
+    // the whole sequence to get from e.g. frame 49.8 to frame 0.2.
     const PX_PER_FRAME = 120; // tune: smaller = faster frame cycling per pixel scrolled
-    const oneWaySweepPx = (FRAMES.length - 1) * PX_PER_FRAME;
-    const pingPongPeriodPx = oneWaySweepPx * 2;
 
-    function pingPongFramePosition(distancePx) {
-      let d = distancePx % pingPongPeriodPx;
-      if (d < 0) d += pingPongPeriodPx;
-      return d <= oneWaySweepPx
-        ? d / PX_PER_FRAME                          // forward leg: 0 → 49
-        : (pingPongPeriodPx - d) / PX_PER_FRAME;     // return leg: 49 → 0
-    }
-
-    // Momentum/inertial scrolling (trackpads especially) fires a burst of
-    // tiny backward scrollLeft readings as it decelerates and settles, even
-    // while you're still net scrolling forward. Counting *events* to filter
-    // that out is unreliable — momentum can easily produce 3+ tiny backward
-    // events, which briefly snapped the frame back before correcting itself.
-    // A distance dead-zone is more robust: any backward wobble smaller than
-    // BACKWARD_CONFIRM_PX is ignored outright, no matter how many events it
-    // spans, and only a move that actually clears that gap counts as a real
-    // intentional backward scroll.
-    const BACKWARD_CONFIRM_PX = 40; // tune: raise if flicker persists, lower if backward scroll feels laggy
-
+    // Trying to distinguish "real" backward scroll from "noisy" backward
+    // scroll (momentum decay, elastic rubber-band overscroll at the shelf's
+    // edges, etc.) is fragile — rubber-band bounce in particular can easily
+    // be bigger than any dead-zone threshold, so it kept slipping through.
+    // The animation doesn't actually need to track true backward scrolling:
+    // it only needs to track total distance traveled, so it can simply
+    // never go backward. maxScrollLeftSeen is strictly monotonic — it only
+    // ever holds, never decreases — which makes a visible regression
+    // impossible regardless of what's causing the scrollLeft noise.
     function updateFrameFromScroll() {
       const maxScroll = shelfEl.scrollWidth - shelfEl.clientWidth;
       if (maxScroll <= 0) return;
       const raw = shelfEl.scrollLeft;
+      if (raw <= maxScrollLeftSeen) return; // never move backward — hold position
+      maxScrollLeftSeen = raw;
 
-      if (raw > maxScrollLeftSeen) {
-        maxScrollLeftSeen = raw; // new furthest point — always accepted
-      } else if (maxScrollLeftSeen - raw > BACKWARD_CONFIRM_PX) {
-        maxScrollLeftSeen = raw; // dropped past the noise band — genuine backward scroll
-      } else {
-        if (window.FRAME_DEBUG) console.log('[frame] ignoring backward wobble', {raw, maxScrollLeftSeen, gap: maxScrollLeftSeen - raw});
-        return; // within the dead-zone — treat as momentum noise, hold position
-      }
-
-      targetFrame = pingPongFramePosition(maxScrollLeftSeen);
+      targetFrame = maxScrollLeftSeen / PX_PER_FRAME; // unwrapped — keeps growing forever
       if (window.FRAME_DEBUG) console.log('[frame] raw:', raw, 'maxScrollLeftSeen:', maxScrollLeftSeen, 'targetFrame:', targetFrame.toFixed(2), 'currentFrame:', currentFrame.toFixed(2));
     }
     document.addEventListener('mousemove', e => { curMouseXf = e.clientX; curMouseYf = e.clientY; });
