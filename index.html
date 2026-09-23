@@ -1402,7 +1402,7 @@
         <div class="meta-row"><span class="meta-label">HLTB</span><span class="meta-val">${esc(game.hltb || '—')}</span></div>
         <div class="meta-row"><label class="meta-label" for="modal-hours-input">Hours played</label><span class="meta-val"><input type="number" min="0" step="0.5" inputmode="decimal" class="meta-input hours-input" id="modal-hours-input" value="${game.hoursPlayed != null ? esc(game.hoursPlayed) : ''}" placeholder="0"/></span></div>
         <div class="meta-row"><label class="meta-label" for="modal-date-input">Completed</label><span class="meta-val"><input type="date" class="meta-input date-input" id="modal-date-input" value="${esc(game.dateCompleted || '')}"/></span></div>
-        <div class="meta-row meta-row-playing"><label class="meta-label" for="modal-playing-check">Playing now</label><span class="meta-val"><span class="playing-toggle"><input type="checkbox" role="switch" id="modal-playing-check" ${game.status === 'Playing' ? 'checked' : ''}/><span class="playing-toggle-dot" aria-hidden="true"></span></span></span></div>
+        <div class="meta-row meta-row-playing"><label class="meta-label" for="modal-playing-check">Playing now</label><span class="meta-val"><label class="playing-toggle"><input type="checkbox" role="switch" id="modal-playing-check" ${game.status === 'Playing' ? 'checked' : ''}/><span class="playing-toggle-dot" aria-hidden="true"></span></label></span></div>
       `;
 
       const bindField = (id, field, read, title, icon) => {

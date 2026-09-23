@@ -384,7 +384,7 @@ body.is-grid .grid-wrap{display:block;}
 .date-input{max-width:132px;color-scheme:dark;}
 .playing-toggle{position:relative;display:inline-block;width:36px;height:20px;cursor:pointer;}
 .playing-toggle input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1;}
-.playing-toggle-dot{position:absolute;inset:0;background:var(--line2);border-radius:20px;transition:background var(--d-micro);}
+.playing-toggle-dot{position:absolute;inset:0;pointer-events:none;background:var(--line2);border-radius:20px;transition:background var(--d-micro);}
 .playing-toggle-dot::before{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--grey);transition:transform var(--d-ui) var(--ease),background var(--d-micro),box-shadow var(--d-micro);}
 .playing-toggle input:checked+.playing-toggle-dot{background:rgba(62,200,99,.25);}
 .playing-toggle input:checked+.playing-toggle-dot::before{transform:translateX(16px);background:var(--ok);box-shadow:0 0 8px var(--ok);}
