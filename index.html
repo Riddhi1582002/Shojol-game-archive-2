@@ -272,6 +272,20 @@
     const pad3 = n => String(n).padStart(3, '0');
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const firstGenre = g => (g.genre || '').split('·')[0].trim();
+    const GENRE_SHORT = {
+      'role-playing (rpg)': 'RPG', "hack and slash/beat 'em up": 'Hack & slash', 'platform': 'Platformer',
+      'simulator': 'Sim', 'real time strategy (rts)': 'RTS', 'turn-based strategy (tbs)': 'Turn-based',
+      'point-and-click': 'Point & click', 'card & board game': 'Card & board', 'quiz/trivia': 'Trivia',
+      'massively multiplayer online (mmo)': 'MMO', 'moba': 'MOBA',
+    };
+    const shortGenre = raw => {
+      const k = (raw || '').trim().toLowerCase();
+      if (!k) return '';
+      if (GENRE_SHORT[k]) return GENRE_SHORT[k];
+      const acr = k.match(/\(([^)]+)\)/); // "something (xyz)" → "XYZ"
+      return acr ? acr[1].toUpperCase() : raw.trim().replace(/\s*\/\s*/g, ' / ');
+    };
+    const metacriticText = s => s >= 75 ? '#7fd07f' : s >= 60 ? '#e0c341' : '#ff6b6b';
     const isDenied = e => e?.code === 'permission-denied' || /permission/i.test(e?.message || '');
 
     // DOM refs
@@ -412,7 +426,7 @@
     // ── EMBERS (ambient) + CURSOR TRAIL ───────
     const trailCanvas = $('trail-canvas'), tctx = trailCanvas.getContext('2d');
     const emberCanvas = $('ember-canvas'), ectx = emberCanvas.getContext('2d');
-    let particles = [], lastTrailX = -99, lastTrailY = -99;
+    let particles = [], lastTrailX = -99, lastTrailY = -99, trailDirty = false;
     const embers = [];
     const EMBER_COUNT = 20;
     function sizeFxCanvases() {
@@ -485,7 +499,7 @@
         });
         ectx.globalAlpha = 1;
         // cursor trail
-        tctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+        if (particles.length || trailDirty) { tctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height); trailDirty = particles.length > 0; }
         if (particles.length) {
           particles = particles.filter(p => p.life > 0.02);
           particles.forEach(p => {
@@ -739,6 +753,7 @@
       lastTabIndex = newIndex;
       activeTab = tab;
       activeFilter = 'all'; searchQuery = ''; searchEl.value = ''; sortEl.value = 'number'; activeSort = 'number';
+      document.body.classList.remove('sort-metacritic');
       searchWrap.classList.remove('has-query');
       if (!keepReviewed) { reviewedFilter = false; reviewedStat.classList.remove('stat-active'); reviewedStat.setAttribute('aria-pressed', 'false'); }
       document.querySelectorAll('.tab').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
@@ -795,13 +810,16 @@
     // ── PILLS ────────────────────────────────
     function buildPills() {
       const games = listFor(activeTab);
-      const genres = [...new Set(games.map(g => firstGenre(g).toLowerCase()).filter(Boolean))].sort();
-      if (activeFilter !== 'all' && !genres.includes(activeFilter)) activeFilter = 'all';
+      const counts = {};
+      games.forEach(g => { const k = firstGenre(g).toLowerCase(); if (k) counts[k] = (counts[k] || 0) + 1; });
+      const genres = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8);
+      if (activeFilter !== 'all' && !counts[activeFilter]) activeFilter = 'all';
       pillsEl.innerHTML = '';
-      ['all', ...genres.slice(0, 8)].forEach(genre => {
+      [['all', games.length], ...genres].forEach(([genre, n]) => {
         const btn = document.createElement('button');
         btn.type = 'button'; btn.className = 'pill'; btn.dataset.filter = genre;
-        btn.textContent = genre === 'all' ? 'All' : genre;
+        btn.innerHTML = `${esc(genre === 'all' ? 'All' : shortGenre(genre))}<span class="pill-count">${n}</span>`;
+        btn.setAttribute('aria-label', `${genre === 'all' ? 'All genres' : shortGenre(genre)}, ${n} games`);
         const on = genre === activeFilter;
         btn.classList.toggle('active', on); btn.setAttribute('aria-pressed', String(on));
         pillsEl.appendChild(btn);
@@ -872,12 +890,12 @@
         return stateHTML({
           kicker: `// 0 results in ${esc(tabLabel)}`,
           title: `Nothing called “${esc(searchQuery)}”`,
-          sub: elsewhere.length ? `But there ${elsewhere[0].n === 1 && elsewhere.length === 1 ? 'is' : 'are'} ${where}.` : activeFilter !== 'all' ? `Not in ${esc(activeFilter)}, anyway.` : 'Check the spelling, or file it as a new entry.',
+          sub: elsewhere.length ? `But there ${elsewhere[0].n === 1 && elsewhere.length === 1 ? 'is' : 'are'} ${where}.` : activeFilter !== 'all' ? `Not in ${esc(shortGenre(activeFilter))}, anyway.` : 'Check the spelling, or file it as a new entry.',
           actions,
         });
       }
       if (reviewedFilter) return stateHTML({ kicker: '// 0 reviewed', title: 'No reviews yet', sub: 'Open a game and leave a verdict. Even one line counts.', actions: [{ act: 'show-all', label: 'Show everything', primary: true }] });
-      if (activeFilter !== 'all') return stateHTML({ kicker: '// 0 entries', title: `No ${esc(activeFilter)} here`, actions: [{ act: 'all-genres', label: 'All genres', primary: true }] });
+      if (activeFilter !== 'all') return stateHTML({ kicker: '// 0 entries', title: `No ${esc(shortGenre(activeFilter))} here`, actions: [{ act: 'all-genres', label: 'All genres', primary: true }] });
       const copy = {
         completed: ['Nothing cleared yet', 'Go finish something. The shelf will wait.'],
         backlog:   ['The backlog is empty', 'Suspicious. Add the next obsession.'],
@@ -1063,28 +1081,26 @@
       card.dataset.id = game.id;
       const title = game.title || 'Untitled';
       const num = pad3(game.number || index + 1);
-      const genre = firstGenre(game) || '—';
-      const label = [title, game.rating ? `rated ${game.rating} out of 10` : '', game.status === 'Playing' ? 'currently playing' : '', game.review ? 'reviewed' : ''].filter(Boolean).join(', ');
+            const label = [title, game.rating ? `rated ${game.rating} out of 10` : '', game.status === 'Playing' ? 'currently playing' : '', game.review ? 'reviewed' : ''].filter(Boolean).join(', ');
       card.setAttribute('aria-label', label);
-      if (title.length > 16) card.title = title;
+      if (title.length > 30) card.title = title;
 
-      const ratingBadge = game.rating ? `<span class="card-badge" title="Rated ${game.rating}/10">${game.rating}/10</span>` : '';
-      const metaBadge   = game.metacritic ? `<span class="card-meta" title="Metacritic ${game.metacritic}" style="background:${metacriticColor(game.metacritic)}">${game.metacritic}</span>` : '';
-      const reviewDot   = game.review ? '<span class="card-dot" title="Reviewed"></span>' : '';
-      const playingDot  = game.status === 'Playing' ? '<span class="card-playing-dot" title="Currently playing"></span>' : '';
-      const hltb        = game.hltb ? `<span class="card-hltb" title="How long to beat">${esc(game.hltb)}</span>` : '';
+      const genreShort = shortGenre(firstGenre(game));
+      const score   = game.rating ? `<span class="card-score" title="Rated ${game.rating}/10">${game.rating}<small>/10</small></span>` : '<span class="card-score"></span>';
+      const mc      = game.metacritic ? `<span class="card-mc" title="Metacritic ${game.metacritic}" style="color:${metacriticText(game.metacritic)}">MC ${game.metacritic}</span>` : '<span class="card-mc"></span>';
+      const playing = game.status === 'Playing' ? '<span class="card-playing">Playing</span>' : '';
+      const hltb    = game.hltb ? `<span class="card-hltb" title="How long to beat">${esc(game.hltb)}</span>` : '';
 
       card.innerHTML = `
         <span class="card-tilt"><span class="card-inner">
           <span class="card-cover-wrap">
             ${game.coverUrl ? `<img class="card-cover" src="${esc(game.coverUrl)}" alt="" loading="lazy" decoding="async" draggable="false"/>` : noArtHTML(title)}
-            <span class="card-reveal" aria-hidden="true"><span class="card-reveal-cta">View entry ›</span></span>
-            ${ratingBadge}${metaBadge}${reviewDot}${playingDot}
+            ${playing}
           </span>
           <span class="card-body">
-            <span class="card-num">//${num}</span>
+            <span class="card-kicker"><span class="card-num">//${num}${game.review ? '<span class="card-reviewed" title="Reviewed"></span>' : ''}</span>${score}${mc}</span>
             <span class="card-name">${esc(title)}</span>
-            <span class="card-foot"><span class="card-genre">${esc(genre.toUpperCase())}</span>${hltb}</span>
+            <span class="card-foot"><span class="card-genre">${esc(genreShort)}</span>${hltb}</span>
           </span>
         </span></span>
         <span class="card-floor-glow" aria-hidden="true"></span>`;
@@ -1099,8 +1115,8 @@
         tiltRaf = requestAnimationFrame(() => {
           const r = card.getBoundingClientRect();
           const cx = ((e.clientX - r.left) / r.width - 0.5) * 2, cy = ((e.clientY - r.top) / r.height - 0.5) * 2;
-          inner.style.setProperty('--ryh', (cx * 5).toFixed(2) + 'deg');
-          inner.style.setProperty('--rx', (-cy * 4).toFixed(2) + 'deg');
+          inner.style.setProperty('--ryh', (cx * 3).toFixed(2) + 'deg');
+          inner.style.setProperty('--rx', (-cy * 2.5).toFixed(2) + 'deg');
         });
       });
       card.addEventListener('pointerleave', () => { cancelAnimationFrame(tiltRaf); inner.style.removeProperty('--ryh'); inner.style.removeProperty('--rx'); });
@@ -1111,7 +1127,6 @@
       return card;
     }
 
-    const metacriticText = s => s >= 75 ? '#7fd07f' : s >= 60 ? '#e0c341' : '#ff6b6b';
     function metacriticColor(s) {
       if (s >= 90) return '#2d6e2d';
       if (s >= 75) return '#4a7a2a';
@@ -1156,9 +1171,9 @@
         const dist = Math.abs(signedDist);
         if (dist > halfW + 320) continue; // off-screen: leave it alone
         const norm = Math.min(dist / halfW, 1);
-        const ty = norm * norm * 22;
-        const sc = 1 - norm * 0.08;
-        const rotY = (signedDist / halfW) * -10 * (1 - norm * 0.3);
+        const ty = norm * norm * 12;
+        const sc = 1 - norm * 0.05;
+        const rotY = (signedDist / halfW) * -6 * (1 - norm * 0.3);
         shelfCards[i].firstElementChild.style.transform = `perspective(1000px) rotateY(${rotY.toFixed(2)}deg) translateY(${ty.toFixed(1)}px) scale(${sc.toFixed(3)})`;
       }
     }
@@ -1251,7 +1266,7 @@
       }
     });
     $('search-clear').addEventListener('click', () => { clearSearch(); searchEl.focus(); });
-    sortEl.addEventListener('change', e => { activeSort = e.target.value; renderCurrentView('update'); });
+    sortEl.addEventListener('change', e => { activeSort = e.target.value; document.body.classList.toggle('sort-metacritic', activeSort === 'metacritic'); renderCurrentView('update'); });
     document.addEventListener('keydown', e => {
       if (e.key !== '/' || overlayStack.length || e.metaKey || e.ctrlKey) return;
       if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
@@ -1292,7 +1307,7 @@
 
       modalNumber.textContent = `//${String(game.number || '').padStart(3,'0')}`;
       modalTitle.textContent  = game.title;
-      modalGenre.textContent  = (game.genre || 'Unknown genre').toUpperCase();
+      modalGenre.textContent  = (game.genre ? game.genre.split('·').map(shortGenre).filter(Boolean).join(' · ') : 'Unknown genre').toUpperCase();
       modalDesc.textContent   = game.description || '';
 
       modalMeta.innerHTML = `
