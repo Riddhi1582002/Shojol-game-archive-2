@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>SHOJOL'S GAME ARCHIVE</title>
+  <meta name="description" content="Shojol's personal game archive: everything cleared, everything waiting, and the games we play together."/>
+  <meta name="theme-color" content="#050505"/>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23050505'/%3E%3Cpath d='M0 0h14L0 14z' fill='%23e01f1f'/%3E%3Cpath d='M9 25L23 7' stroke='%23e01f1f' stroke-width='3'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin/>
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"/>
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"/>
+  <link rel="preload" as="image" href="shojols-logo.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
   <style>
     /* CURSOR */
@@ -14,177 +22,211 @@
 </head>
 <body>
 
-  <!-- FRAME SCRUBBER BG -->
-  <canvas class="frame-canvas" id="frame-canvas"></canvas>
-  <div class="grad-top"></div>
-  <div class="grad-bottom"></div>
+  <!-- ATMOSPHERE: frame scrubber background + embers -->
+  <canvas class="frame-canvas" id="frame-canvas" aria-hidden="true"></canvas>
+  <div class="grad-top" aria-hidden="true"></div>
+  <div class="grad-bottom" aria-hidden="true"></div>
+  <canvas class="trail-canvas" id="trail-canvas" aria-hidden="true"></canvas>
+  <canvas class="ember-canvas" id="ember-canvas" aria-hidden="true"></canvas>
+  <div class="fog-layer" aria-hidden="true"></div>
+  <div class="grid-scrim" aria-hidden="true"></div>
 
-  <!-- MUTE BUTTON -->
-  <button class="mute-btn" id="mute-btn" title="Toggle sound">🔇</button>
-  <audio id="bg-music" loop preload="auto">
+  <audio id="bg-music" loop preload="none">
     <source src="https://static.wixstatic.com/mp3/611f0c_ded51d0d15ea41d199816666caefb463.mp3" type="audio/mpeg"/>
   </audio>
 
-  <!-- HIDDEN MESSAGE (small dot, top right, invisible unless you know it's there) -->
-  <div id="easter-dot" class="easter-dot"></div>
-  <div id="easter-overlay" class="easter-overlay">
-    <div class="easter-text">I LOVE YOU,<br/>SHOJOL BABY</div>
-  </div>
-
-  <!-- RIBBON -->
-  <header class="ribbon">
+  <!-- RIBBON: discovery first, then sections, then the one primary action -->
+  <header class="ribbon" id="ribbon">
     <div class="ribbon-inner">
-      <div class="ribbon-left">
-        <input class="search-input" id="search-input" type="text" placeholder="SEARCH..."/>
-        <div class="filter-pills" id="filter-pills">
-          <button class="pill active" data-filter="all">ALL</button>
-        </div>
-        <select class="sort-select" id="sort-select">
-          <option value="number">BY NUMBER</option>
+      <label class="search" id="search-wrap">
+        <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.3 10.3L15 15" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span class="sr-only">Search the archive</span>
+        <input class="search-input" id="search-input" type="search" placeholder="Search the archive" autocomplete="off" spellcheck="false" enterkeyhint="search"/>
+        <span class="search-count" id="search-count" aria-live="polite"></span>
+        <kbd class="search-kbd" aria-hidden="true">/</kbd>
+        <button class="search-clear" id="search-clear" type="button" aria-label="Clear search">✕</button>
+      </label>
+
+      <div class="tab-group" id="tab-group" role="tablist" aria-label="Archive sections">
+        <button class="tab active" data-tab="completed" role="tab" aria-selected="true" title="Finished and filed">Completed</button>
+        <button class="tab" data-tab="backlog" role="tab" aria-selected="false" title="Waiting their turn">Backlog</button>
+        <button class="tab" data-tab="ours" role="tab" aria-selected="false" title="The ones we play together">Our games <span class="tab-heart" aria-hidden="true">♥</span></button>
+        <span class="tab-indicator" id="tab-indicator" aria-hidden="true"></span>
+      </div>
+
+      <div class="ribbon-actions">
+        <button class="btn-add" id="btn-add-game" type="button" aria-label="Add a game"><span class="btn-add-plus" aria-hidden="true">+</span><span class="btn-add-word">Add game</span></button>
+        <button class="btn-icon btn-grid" id="btn-grid" type="button" aria-pressed="false" aria-label="Grid view" title="Grid view"></button>
+        <button class="btn-icon mute-btn" id="mute-btn" type="button" aria-pressed="false" aria-label="Music" title="Music"></button>
+      </div>
+
+      <div class="filter-pills" id="filter-pills" role="group" aria-label="Filter by genre">
+        <button class="pill active" data-filter="all" aria-pressed="true">All</button>
+      </div>
+
+      <label class="sort">
+        <span class="sort-label">Sort</span>
+        <select class="sort-select" id="sort-select" aria-label="Sort games">
+          <option value="number">By number</option>
           <option value="alpha">A → Z</option>
-          <option value="rating">BY RATING</option>
-          <option value="metacritic">METACRITIC</option>
+          <option value="rating">By rating</option>
+          <option value="metacritic">Metacritic</option>
         </select>
-      </div>
-      <div class="ribbon-right">
-        <div class="tab-group">
-          <button class="tab active" data-tab="completed">COMPLETED</button>
-          <button class="tab" data-tab="backlog">BACKLOG</button>
-          <button class="tab" data-tab="ours">OUR GAMES ♥</button>
-        </div>
-        <div class="stat-block"><span class="stat-num" id="total-count">0</span><span class="stat-label">CLEARED</span></div>
-        <div class="stat-block"><span class="stat-num" id="backlog-count">0</span><span class="stat-label">BACKLOG</span></div>
-        <div class="stat-block stat-clickable" id="reviewed-stat" title="Show only reviewed games"><span class="stat-num" id="reviewed-count">0</span><span class="stat-label">REVIEWED</span></div>
-        <button class="btn-add" id="btn-add-game">+ ADD</button>
-        <button class="btn-grid" id="btn-grid" title="Toggle grid view">⊞</button>
-      </div>
+      </label>
     </div>
-    <div class="genre-bar" id="genre-bar"></div>
+    <div class="genre-bar" id="genre-bar" aria-hidden="true"></div>
   </header>
 
-  <!-- HERO TITLE -->
-  <div class="hero-wrap">
+  <!-- HERO: identity + the save-file readout -->
+  <main class="hero-wrap" id="hero">
     <div class="hero-title">
-      <img class="hero-img" id="archive-name" src="shojols-logo.png" alt="SHOJOL'S"/>
-      <div class="hero-accent">GAME ARCHIVE</div>
+      <button class="hero-name" id="archive-name-btn" type="button" title="Rename the archive" aria-label="Shojol's — rename the archive">
+        <img class="hero-img" id="archive-name" src="shojols-logo.png" alt="Shojol's" width="591" height="204" decoding="async"/>
+      </button>
+      <h1 class="hero-accent">GAME ARCHIVE</h1>
+      <div class="hero-stats">
+        <div class="stat-block"><span class="stat-num" id="total-count">–</span><span class="stat-label">Cleared</span></div>
+        <div class="stat-block"><span class="stat-num" id="backlog-count">–</span><span class="stat-label">In the backlog</span></div>
+        <button class="stat-block stat-clickable" id="reviewed-stat" type="button" aria-pressed="false" title="Show only reviewed games"><span class="stat-num" id="reviewed-count">–</span><span class="stat-label">Reviewed <span class="stat-arrow" aria-hidden="true">›</span></span></button>
+      </div>
     </div>
-  </div>
-
-  <!-- CURSOR TRAIL CANVAS -->
-  <canvas class="trail-canvas" id="trail-canvas"></canvas>
-  <canvas class="ember-canvas" id="ember-canvas"></canvas>
-  <div class="fog-layer"></div>
-
-  <!-- LOADING BAR -->
-  <div class="xp-bar-wrap" id="xp-bar-wrap">
-    <div class="xp-bar-label">LOADING ARCHIVE</div>
-    <div class="xp-bar-track">
-      <div class="xp-bar-fill" id="xp-fill"></div>
-      <div class="xp-segments"></div>
-    </div>
-  </div>
+  </main>
 
   <!-- SHELF -->
-  <div class="shelf-wrap">
+  <section class="shelf-wrap" id="shelf-wrap" aria-label="Game shelf">
+    <div class="xp-bar-wrap" id="xp-bar-wrap" role="status" aria-live="polite">
+      <div class="xp-bar-label" id="xp-label">Dusting off the shelf</div>
+      <div class="xp-bar-track"><div class="xp-bar-fill" id="xp-fill"></div></div>
+    </div>
+    <div class="shelf-status" id="shelf-status"></div>
     <div class="shelf" id="game-shelf"></div>
-    <div class="scrollbar-wrap">
+    <div class="scrollbar-wrap" aria-hidden="true">
       <div class="scrollbar-track"><div class="scrollbar-thumb" id="shelf-thumb"></div></div>
     </div>
-  </div>
+  </section>
 
-  <div class="grid-wrap" id="grid-wrap" style="display:none;"><div class="game-grid" id="game-grid"></div></div>
+  <section class="grid-wrap" id="grid-wrap" aria-label="Game grid"><div class="grid-status" id="grid-status"></div><div class="game-grid" id="game-grid"></div></section>
 
   <!-- TOAST -->
-  <div class="toast" id="toast">
-    <div class="toast-icon" id="toast-icon">✓</div>
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="toast-icon" id="toast-icon" aria-hidden="true">✓</div>
     <div class="toast-body"><div class="toast-title" id="toast-title"></div><div class="toast-sub" id="toast-sub"></div></div>
   </div>
 
   <!-- DETAIL MODAL -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal">
-      <button class="modal-close" id="modal-close">✕ CLOSE</button>
+  <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal" id="detail-modal">
+      <button class="modal-close" id="modal-close" type="button" aria-label="Close"><span class="modal-close-x" aria-hidden="true">✕</span> Close <kbd aria-hidden="true">Esc</kbd></button>
       <div class="modal-inner">
         <div class="modal-left">
-          <div class="modal-cover-wrap">
+          <div class="modal-cover-wrap" id="modal-cover-wrap">
             <img class="modal-cover" id="modal-cover" src="" alt=""/>
-            <div class="modal-cover-ph" id="modal-cover-ph">NO COVER</div>
+            <div class="modal-cover-ph" id="modal-cover-ph"><span class="no-art-title" id="modal-cover-ph-title"></span><span class="no-art-label">No cover on file</span></div>
           </div>
           <div class="modal-meta" id="modal-meta"></div>
         </div>
         <div class="modal-right">
-          <div class="modal-number" id="modal-number"></div>
-          <div class="modal-title-wrap">
-            <div class="modal-title" id="modal-title"></div>
-            <button class="icon-btn" id="edit-title-btn">✎</button>
+          <div class="modal-head">
+            <div class="modal-number" id="modal-number"></div>
+            <div class="modal-title-wrap">
+              <h2 class="modal-title" id="modal-title"></h2>
+              <button class="icon-btn" id="edit-title-btn" type="button" aria-label="Edit title" title="Edit title">✎</button>
+            </div>
+            <div class="modal-slash" aria-hidden="true"></div>
+            <div class="modal-genre" id="modal-genre"></div>
           </div>
-          <div class="modal-slash"></div>
-          <div class="modal-genre" id="modal-genre"></div>
           <div class="modal-desc" id="modal-desc"></div>
           <div class="review-section" id="review-section">
-            <div class="review-label">// YOUR REVIEW</div>
-            <div class="star-row">
-              <span class="star" data-val="1">★</span><span class="star" data-val="2">★</span>
-              <span class="star" data-val="3">★</span><span class="star" data-val="4">★</span>
-              <span class="star" data-val="5">★</span><span class="star" data-val="6">★</span>
-              <span class="star" data-val="7">★</span><span class="star" data-val="8">★</span>
-              <span class="star" data-val="9">★</span><span class="star" data-val="10">★</span>
+            <div class="review-label" id="review-label">// Your review</div>
+            <div class="star-line">
+              <div class="star-row" role="radiogroup" aria-labelledby="review-label">
+                <button type="button" class="star" data-val="1" role="radio" aria-label="1 out of 10">★</button><button type="button" class="star" data-val="2" role="radio" aria-label="2 out of 10">★</button><button type="button" class="star" data-val="3" role="radio" aria-label="3 out of 10">★</button><button type="button" class="star" data-val="4" role="radio" aria-label="4 out of 10">★</button><button type="button" class="star" data-val="5" role="radio" aria-label="5 out of 10">★</button><button type="button" class="star" data-val="6" role="radio" aria-label="6 out of 10">★</button><button type="button" class="star" data-val="7" role="radio" aria-label="7 out of 10">★</button><button type="button" class="star" data-val="8" role="radio" aria-label="8 out of 10">★</button><button type="button" class="star" data-val="9" role="radio" aria-label="9 out of 10">★</button><button type="button" class="star" data-val="10" role="radio" aria-label="10 out of 10">★</button>
+              </div>
+              <div class="star-readout" id="star-readout" aria-hidden="true"><span class="star-score" id="star-score"></span><span class="star-word" id="star-word"></span></div>
             </div>
-            <textarea class="review-input" id="review-input" placeholder="WRITE YOUR VERDICT..."></textarea>
-            <textarea class="review-input" id="comments-input" placeholder="COMMENTS / REPLAYABILITY..." style="min-height:48px;margin-top:6px;"></textarea>
-            <label class="laali-check-row"><input type="checkbox" id="told-laali-check"/><span class="laali-check-box"></span><span class="laali-check-label">TOLD LAALI ABOUT IT</span></label>
-            <button class="btn-primary" id="btn-save-review">SAVE REVIEW</button>
-            <div class="save-confirm" id="save-confirm">SAVED ✓</div>
+            <textarea class="review-input" id="review-input" placeholder="Write your verdict…" aria-label="Your review"></textarea>
+            <textarea class="review-input review-comments" id="comments-input" placeholder="Comments / replayability…" aria-label="Comments or replayability"></textarea>
+            <div class="review-actions">
+              <label class="laali-check-row"><input type="checkbox" id="told-laali-check"/><span class="laali-check-box" aria-hidden="true"></span><span class="laali-check-label">TOLD LAALI ABOUT IT</span></label>
+              <div class="save-line">
+                <button class="btn-primary" id="btn-save-review" type="button">Save review</button>
+              </div>
+            </div>
           </div>
-          <button class="btn-delete" id="btn-delete-game">🗑 DELETE FROM ARCHIVE</button>
+          <div class="modal-foot" id="modal-foot">
+            <button class="btn-delete" id="btn-delete-game" type="button"><span aria-hidden="true">✕</span> Delete from archive</button>
+            <div class="delete-confirm" id="delete-confirm">
+              <span class="delete-confirm-text" id="delete-confirm-text">Delete this for good?</span>
+              <button class="btn-danger" id="btn-delete-yes" type="button">Delete</button>
+              <button class="btn-ghost" id="btn-delete-no" type="button">Keep it</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- EDIT TITLE MODAL -->
-  <div class="modal-overlay" id="edit-title-overlay">
+  <div class="modal-overlay" id="edit-title-overlay" role="dialog" aria-modal="true" aria-labelledby="edit-title-heading">
     <div class="modal modal-sm">
-      <button class="modal-close" id="edit-title-close">✕</button>
-      <div class="sm-title">EDIT GAME NAME</div><div class="sm-slash"></div>
-      <input class="field-input" id="edit-title-input" type="text" placeholder="GAME TITLE..."/>
-      <button class="btn-primary" id="btn-save-title">SAVE</button>
+      <button class="modal-close" id="edit-title-close" type="button" aria-label="Close"><span class="modal-close-x" aria-hidden="true">✕</span></button>
+      <div class="sm-title" id="edit-title-heading">Rename entry</div><div class="sm-slash" aria-hidden="true"></div>
+      <label class="field-label" for="edit-title-input">Game title</label>
+      <input class="field-input" id="edit-title-input" type="text" placeholder="Game title…" autocomplete="off"/>
+      <div class="field-error" id="edit-title-error" role="alert"></div>
+      <div class="sm-actions"><button class="btn-primary is-solid" id="btn-save-title" type="button">Save</button></div>
     </div>
   </div>
 
   <!-- ADD GAME MODAL -->
-  <div class="modal-overlay" id="add-overlay">
+  <div class="modal-overlay" id="add-overlay" role="dialog" aria-modal="true" aria-labelledby="add-heading">
     <div class="modal modal-sm">
-      <button class="modal-close" id="add-close">✕</button>
-      <div class="sm-title">ADD TO ARCHIVE</div><div class="sm-slash"></div>
-      <div class="add-tabs">
-        <button class="add-tab active" data-addtab="completed">COMPLETED</button>
-        <button class="add-tab" data-addtab="backlog">BACKLOG</button>
-        <button class="add-tab" data-addtab="ours">OUR GAMES</button>
+      <button class="modal-close" id="add-close" type="button" aria-label="Close"><span class="modal-close-x" aria-hidden="true">✕</span></button>
+      <div class="sm-title" id="add-heading">Add to archive</div><div class="sm-slash" aria-hidden="true"></div>
+      <div class="add-tabs" role="radiogroup" aria-label="Which shelf">
+        <button class="add-tab active" data-addtab="completed" type="button" role="radio" aria-checked="true">Completed</button>
+        <button class="add-tab" data-addtab="backlog" type="button" role="radio" aria-checked="false">Backlog</button>
+        <button class="add-tab" data-addtab="ours" type="button" role="radio" aria-checked="false">Our games ♥</button>
       </div>
-      <input class="field-input" id="add-name" type="text" placeholder="SEARCH GAME TITLE..."/>
-      <div class="igdb-results" id="igdb-results"></div>
+      <div class="field-search">
+        <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.3 10.3L15 15" stroke="currentColor" stroke-width="1.6"/></svg>
+        <input class="field-input" id="add-name" type="text" placeholder="Search for a title…" autocomplete="off" spellcheck="false" aria-label="Game title" aria-controls="igdb-results"/>
+      </div>
+      <div class="igdb-results" id="igdb-results" aria-live="polite"></div>
+      <div class="add-foot" id="add-foot"></div>
       <div class="manual-add" id="manual-add" style="display:none;">
-        <input class="field-input" id="add-year" type="text" placeholder="RELEASE YEAR"/>
-        <input class="field-input" id="add-genre" type="text" placeholder="GENRE"/>
-        <input class="field-input" id="add-dev" type="text" placeholder="DEVELOPER"/>
-        <button class="btn-primary" id="btn-manual-add">ADD MANUALLY</button>
+        <p class="sm-sub" id="manual-sub">Filing it by hand. The title comes from the search box.</p>
+        <div class="manual-grid">
+          <input class="field-input" id="add-genre" type="text" placeholder="Genre" aria-label="Genre"/>
+          <input class="field-input" id="add-year" type="text" inputmode="numeric" placeholder="Release year" aria-label="Release year"/>
+          <input class="field-input" id="add-dev" type="text" placeholder="Developer" aria-label="Developer"/>
+        </div>
+        <div class="field-error" id="manual-error" role="alert"></div>
+        <div class="sm-actions"><button class="btn-primary is-solid" id="btn-manual-add" type="button">Add it</button></div>
       </div>
     </div>
   </div>
 
   <!-- EDIT NAME MODAL -->
-  <div class="modal-overlay" id="edit-name-overlay">
+  <div class="modal-overlay" id="edit-name-overlay" role="dialog" aria-modal="true" aria-labelledby="edit-name-heading">
     <div class="modal modal-sm">
-      <button class="modal-close" id="edit-name-close">✕</button>
-      <div class="sm-title">EDIT ARCHIVE NAME</div><div class="sm-slash"></div>
-      <input class="field-input" id="edit-name-input" type="text" placeholder="NAME..."/>
-      <button class="btn-primary" id="btn-save-name">SAVE</button>
+      <button class="modal-close" id="edit-name-close" type="button" aria-label="Close"><span class="modal-close-x" aria-hidden="true">✕</span></button>
+      <div class="sm-title" id="edit-name-heading">Rename the archive</div><div class="sm-slash" aria-hidden="true"></div>
+      <p class="sm-sub">Shows up in the browser tab as “NAME'S GAME ARCHIVE”.</p>
+      <label class="field-label" for="edit-name-input">Whose archive is this?</label>
+      <input class="field-input" id="edit-name-input" type="text" placeholder="Name…" autocomplete="off"/>
+      <div class="field-error" id="edit-name-error" role="alert"></div>
+      <div class="sm-actions"><button class="btn-primary is-solid" id="btn-save-name" type="button">Save</button></div>
     </div>
   </div>
 
-  <script type="module">
+  <!-- HIDDEN MESSAGE (small dot, easy to miss unless you know it's there) -->
+  <button id="easter-dot" class="easter-dot" type="button" aria-label="A secret"></button>
+  <div id="easter-overlay" class="easter-overlay" aria-hidden="true">
+    <div class="easter-text">I LOVE YOU,<br/>SHOJOL BABY</div>
+  </div>
 
+  <script type="module">
     const firebaseConfig = {
       apiKey: "AIzaSyBv3qhh0vW8DlRQk-o7k52Lb8Cz-5-B77M",
       authDomain: "game-archive-8fd9e.firebaseapp.com",
@@ -202,368 +244,450 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
+    // ── STATE ────────────────────────────────
     let completedGames = [], backlogGames = [], oursGames = [];
     let activeTab = 'completed', activeFilter = 'all', activeSort = 'number', reviewedFilter = false;
     let searchQuery = '', currentId = null, currentRating = 0, addTab = 'completed', gridMode = false;
-    let raf = null;
+    let loadState = 'loading', loadError = null, archiveName = '';
+
+    const TABS = {
+      completed: { col: 'games',   label: 'Completed', status: 'Completed' },
+      backlog:   { col: 'backlog', label: 'Backlog',   status: 'To Play' },
+      ours:      { col: 'ours',    label: 'Our games', status: 'To Play' },
+    };
+    const tabOrder = ['completed', 'backlog', 'ours'];
+    const colFor  = t => TABS[t].col;
+    const listFor = t => t === 'completed' ? completedGames : t === 'backlog' ? backlogGames : oursGames;
+    const findGame = id => listFor(activeTab).find(g => g.id === id);
+
+    // ── MOTION + ENV ─────────────────────────
+    const REDUCED_MQ = matchMedia('(prefers-reduced-motion: reduce)');
+    const FINE_MQ    = matchMedia('(hover: hover) and (pointer: fine)');
+    const reduced = () => REDUCED_MQ.matches;
+    const EASE_OUT = 'cubic-bezier(0.16,1,0.3,1)';
+    const EASE_IN  = 'cubic-bezier(0.5,0,0.75,0)';
+
+    // ── HELPERS ──────────────────────────────
+    const $ = id => document.getElementById(id);
+    const pad3 = n => String(n).padStart(3, '0');
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const firstGenre = g => (g.genre || '').split('·')[0].trim();
+    const isDenied = e => e?.code === 'permission-denied' || /permission/i.test(e?.message || '');
 
     // DOM refs
-    const shelfEl       = document.getElementById('game-shelf');
-    const thumbEl       = document.getElementById('shelf-thumb');
-    const gridEl        = document.getElementById('game-grid');
-    const gridWrapEl    = document.getElementById('grid-wrap');
-    const shelfWrapEl   = document.querySelector('.shelf-wrap');
-    const totalEl       = document.getElementById('total-count');
-    const backlogEl     = document.getElementById('backlog-count');
-    const reviewedEl    = document.getElementById('reviewed-count');
-    const genreBarEl    = document.getElementById('genre-bar');
-    const pillsEl       = document.getElementById('filter-pills');
-    const searchEl      = document.getElementById('search-input');
-    const sortEl        = document.getElementById('sort-select');
-    const nameImg       = document.getElementById('archive-name');
-    const toastEl       = document.getElementById('toast');
-    const xpWrap        = document.getElementById('xp-bar-wrap');
-    const xpFill        = document.getElementById('xp-fill');
-    const overlay       = document.getElementById('modal-overlay');
-    const modalClose    = document.getElementById('modal-close');
-    const modalCover    = document.getElementById('modal-cover');
-    const modalCoverPh  = document.getElementById('modal-cover-ph');
-    const modalNumber   = document.getElementById('modal-number');
-    const modalTitle    = document.getElementById('modal-title');
-    const modalGenre    = document.getElementById('modal-genre');
-    const modalDesc     = document.getElementById('modal-desc');
-    const modalMeta     = document.getElementById('modal-meta');
-    const reviewInput   = document.getElementById('review-input');
-    const commentsInput = document.getElementById('comments-input');
-    const btnSave       = document.getElementById('btn-save-review');
-    const saveConfirm   = document.getElementById('save-confirm');
-    const reviewSection = document.getElementById('review-section');
-    const stars         = document.querySelectorAll('.star');
-    const editTitleBtn  = document.getElementById('edit-title-btn');
+    const ribbonEl      = $('ribbon');
+    const shelfEl       = $('game-shelf');
+    const shelfWrapEl   = $('shelf-wrap');
+    const shelfStatusEl = $('shelf-status');
+    const thumbEl       = $('shelf-thumb');
+    const gridEl        = $('game-grid');
+    const gridWrapEl    = $('grid-wrap');
+    const gridStatusEl  = $('grid-status');
+    const heroEl        = $('hero');
+    const totalEl       = $('total-count');
+    const backlogEl     = $('backlog-count');
+    const reviewedEl    = $('reviewed-count');
+    const reviewedStat  = $('reviewed-stat');
+    const genreBarEl    = $('genre-bar');
+    const pillsEl       = $('filter-pills');
+    const searchEl      = $('search-input');
+    const searchWrap    = $('search-wrap');
+    const searchCount   = $('search-count');
+    const sortEl        = $('sort-select');
+    const tabGroupEl    = $('tab-group');
+    const tabIndicator  = $('tab-indicator');
+    const nameBtn       = $('archive-name-btn');
+    const toastEl       = $('toast');
+    const xpWrap        = $('xp-bar-wrap');
+    const xpFill        = $('xp-fill');
+    const overlay       = $('modal-overlay');
+    const detailModal   = $('detail-modal');
+    const modalClose    = $('modal-close');
+    const modalCover    = $('modal-cover');
+    const modalCoverWrap= $('modal-cover-wrap');
+    const modalCoverPh  = $('modal-cover-ph');
+    const modalNumber   = $('modal-number');
+    const modalTitle    = $('modal-title');
+    const modalGenre    = $('modal-genre');
+    const modalDesc     = $('modal-desc');
+    const modalMeta     = $('modal-meta');
+    const modalFoot     = $('modal-foot');
+    const reviewInput   = $('review-input');
+    const commentsInput = $('comments-input');
+    const btnSave       = $('btn-save-review');
+    const reviewSection = $('review-section');
+    const stars         = [...document.querySelectorAll('.star')];
+    const editTitleBtn  = $('edit-title-btn');
+    const btnGrid       = $('btn-grid');
+    const muteBtn       = $('mute-btn');
+    const bgMusic       = $('bg-music');
+
+    // ── LAYOUT VARS ──────────────────────────
+    // The hero sits in whatever space the ribbon and shelf leave, at every viewport.
+    const rootStyle = document.documentElement.style;
+    new ResizeObserver(() => {
+      rootStyle.setProperty('--ribbon-h', ribbonEl.offsetHeight + 'px');
+      rootStyle.setProperty('--shelf-h', shelfWrapEl.offsetHeight + 'px');
+    }).observe(ribbonEl);
+    new ResizeObserver(() => rootStyle.setProperty('--shelf-h', shelfWrapEl.offsetHeight + 'px')).observe(shelfWrapEl);
+
+    // ── ICONS ────────────────────────────────
+    const ICON = {
+      grid:  '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="1.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="1.5" y="9.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="9.5" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>',
+      shelf: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="3" width="3.6" height="10" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="6.2" y="3" width="3.6" height="10" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="11.4" y="3" width="3.6" height="10" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>',
+      soundOff: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 5.8h2.8L8 2.8v10.4L4.3 10.2H1.5z" fill="currentColor"/><path d="M10.8 6l4 4M14.8 6l-4 4" stroke="currentColor" stroke-width="1.4"/></svg>',
+      soundOn:  '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 5.8h2.8L8 2.8v10.4L4.3 10.2H1.5z" fill="currentColor"/><path d="M10.6 5.4a3.6 3.6 0 010 5.2M12.6 3.4a6.4 6.4 0 010 9.2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>',
+    };
+    btnGrid.innerHTML = ICON.grid;
+    muteBtn.innerHTML = ICON.soundOff;
 
     // ── FRAME SCRUBBER BACKGROUND ─────────────
+    // The background film is scrubbed by the shelf (or grid) scroll position.
     const FRAMES = Array.from({length: 50}, (_, i) => `frames/${String(i+1).padStart(3,'0')}.jpg`);
-    const frameCanvas = document.getElementById('frame-canvas');
+    const frameCanvas = $('frame-canvas');
     const fctx = frameCanvas.getContext('2d');
-    let currentFrame = 0, targetFrame = 0, frameImages = [], framesLoaded = 0;
-    let allFramesLoaded = false, justFinishedLoading = false;
-    let frameDPR = window.devicePixelRatio || 1;
-    let curMouseXf = 0, curMouseYf = 0; // for subtle parallax offset in the frame draw
+    let currentFrame = 0, targetFrame = 0, frameImages = [], framesLoaded = 0, frameDirty = true;
+    let frameDPR = 1;
+    let mouseX = innerWidth / 2, mouseY = innerHeight / 2; // raw pointer
+    let parX = mouseX, parY = mouseY;                      // eased pointer for parallax
 
     function resizeFrameCanvas() {
-      frameDPR = Math.min(window.devicePixelRatio || 1, 2.5);
-      frameCanvas.width = Math.round(window.innerWidth * frameDPR);
-      frameCanvas.height = Math.round(window.innerHeight * frameDPR);
+      // the film is atmospheric and heavily graded — 1.5x is plenty and keeps redraws cheap
+      frameDPR = Math.min(window.devicePixelRatio || 1, 1.5);
+      frameCanvas.width = Math.round(innerWidth * frameDPR);
+      frameCanvas.height = Math.round(innerHeight * frameDPR);
       fctx.setTransform(frameDPR, 0, 0, frameDPR, 0, 0);
       fctx.imageSmoothingEnabled = true;
       fctx.imageSmoothingQuality = 'high';
-      drawFrame(currentFrame);
+      frameDirty = true; kick();
     }
-    resizeFrameCanvas();
-    window.addEventListener('resize', resizeFrameCanvas);
 
-    // Load frames strictly in order, one at a time — this guarantees frame 5
-    // is never available before frame 4, so there's no possibility of frames
-    // arriving out of sequence. While loading, the scrubber still responds
-    // immediately using whatever's loaded so far — if you scroll ahead of
-    // what's ready, it clamps to the furthest frame actually loaded (never
-    // freezes, never jumps backward to an earlier frame), so it always reads
-    // as smooth forward progress instead of getting stuck.
-    async function preloadFrames() {
-      for (let i = 0; i < FRAMES.length; i++) {
-        await new Promise(resolve => {
-          const img = new Image();
-          img.onload = () => {
-            frameImages[i] = img;
-            framesLoaded = i + 1;
-            if (i === 0) drawFrame(0);
-            resolve();
-          };
-          img.onerror = resolve; // don't let one bad frame stall the rest
-          img.src = FRAMES[i];
-        });
-      }
-      allFramesLoaded = true;
+    // Frames load strictly in order so the scrubber never shows a gap; it clamps
+    // to the furthest frame loaded. Frame 1 loads immediately, the rest wait until
+    // the archive data has arrived so they never compete with it.
+    function loadFrame(i) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.onload = () => { frameImages[i] = img; framesLoaded = i + 1; if (i === 0 || Math.round(targetFrame) >= i) { frameDirty = true; kick(); } resolve(); };
+        img.onerror = resolve; // one bad frame never stalls the rest
+        img.src = FRAMES[i];
+      });
     }
-    preloadFrames();
+    const firstFrame = loadFrame(0);
+    let framesStarted = false;
+    async function startFramePreload() {
+      if (framesStarted) return; framesStarted = true;
+      await firstFrame;
+      for (let i = 1; i < FRAMES.length; i++) await loadFrame(i);
+    }
+    setTimeout(startFramePreload, 4000); // safety net if data is slow
 
     function drawFrame(pos) {
       const maxLoadedIdx = framesLoaded - 1;
-      if (maxLoadedIdx < 0) return; // nothing loaded yet
+      if (maxLoadedIdx < 0) return;
       let i0 = Math.round(Math.max(0, Math.min(pos, FRAMES.length - 1)));
-      if (i0 > maxLoadedIdx) i0 = maxLoadedIdx; // clamp to furthest loaded frame, never show a gap
+      if (i0 > maxLoadedIdx) i0 = maxLoadedIdx;
       const imgA = frameImages[i0];
-      if (!fctx || !imgA) return;
-      const cw = window.innerWidth, ch = window.innerHeight;
-      const scale = Math.max(cw / imgA.width, ch / imgA.height) * 1.08;
+      if (!imgA) return;
+      const cw = innerWidth, ch = innerHeight;
+      const scale = Math.max(cw / imgA.width, ch / imgA.height) * 1.06;
       const dw = imgA.width * scale, dh = imgA.height * scale;
-      const ox = (cw - dw) / 2 + (curMouseXf / cw - 0.5) * -18;
-      const oy = (ch - dh) / 2 + (curMouseYf / ch - 0.5) * -10;
-      fctx.clearRect(0, 0, cw, ch);
-      fctx.globalAlpha = 1;
+      const ox = (cw - dw) / 2 + (parX / cw - 0.5) * -14;
+      const oy = (ch - dh) / 2 + (parY / ch - 0.5) * -8;
       fctx.drawImage(imgA, ox, oy, dw, dh);
     }
 
-    (function frameLoop() {
-      currentFrame += (targetFrame - currentFrame) * 0.35;
-      if (Math.abs(targetFrame - currentFrame) < 0.05) currentFrame = targetFrame;
-      drawFrame(currentFrame);
-      requestAnimationFrame(frameLoop);
-    })();
-
-    const FRAME_DEBUG = false; // flip to true in devtools console to see live scroll/frame numbers
-
-    // Direct scrubber: frame position always mirrors the exact scroll
-    // position, both ways — scroll to the end and you're on frame 50,
-    // scroll back and it plays back through the same frames in reverse.
-    // The easing in frameLoop above (currentFrame lerping toward
-    // targetFrame each animation frame) already smooths out tiny jitter
-    // from momentum/rubber-band scrolling, so no separate forward-only
-    // lock is needed on top of it.
+    const FRAME_DEBUG = false; // flip window.FRAME_DEBUG = true in devtools to log scroll → frame
     function updateFrameFromScroll() {
-      const maxScroll = shelfEl.scrollWidth - shelfEl.clientWidth;
-      if (maxScroll <= 0) return;
-      const raw = shelfEl.scrollLeft;
-      const pct = Math.max(0, Math.min(1, raw / maxScroll));
+      const el = gridMode ? gridWrapEl : shelfEl;
+      const max = gridMode ? el.scrollHeight - el.clientHeight : el.scrollWidth - el.clientWidth;
+      const raw = gridMode ? el.scrollTop : el.scrollLeft;
+      const pct = max > 0 ? Math.max(0, Math.min(1, raw / max)) : 0;
       targetFrame = pct * (FRAMES.length - 1);
-      if (window.FRAME_DEBUG) console.log('[frame] raw:', raw, 'maxScroll:', maxScroll, 'targetFrame:', targetFrame.toFixed(2), 'currentFrame:', currentFrame.toFixed(2));
+      if (window.FRAME_DEBUG || FRAME_DEBUG) console.log('[frame] raw:', raw, 'max:', max, 'targetFrame:', targetFrame.toFixed(2));
+      kick();
     }
-    document.addEventListener('mousemove', e => { curMouseXf = e.clientX; curMouseYf = e.clientY; });
 
-    // ── CURSOR EMBER TRAIL ────────────────────
-    const canvas = document.getElementById('trail-canvas');
-    const ctx    = canvas.getContext('2d');
-    let particles = [];
-
-    function resizeCanvas() {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    document.addEventListener('mousemove', e => {
-      for (let i = 0; i < 2; i++) {
-        particles.push({
-          x: e.clientX + (Math.random()-0.5)*5,
-          y: e.clientY + (Math.random()-0.5)*5,
-          life: 1,
-          size: Math.random()*1.4+0.7,
-          vx: (Math.random()-0.5)*0.6,
-          vy: -Math.random()*0.9 - 0.2, // embers drift upward, not randomly in all directions
-          hue: 10 + Math.random()*25,
-          flicker: Math.random()*Math.PI*2
-        });
-      }
-      if (particles.length > 90) particles = particles.slice(-90);
-    });
-
-    function animateTrail() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles = particles.filter(p => p.life > 0.01);
-      particles.forEach(p => {
-        p.life -= 0.022;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy -= 0.006; // gentle upward acceleration, like real embers
-        p.flicker += 0.15;
-        const flick = 0.8 + Math.sin(p.flicker)*0.2;
-        const a = p.life * 0.65 * flick;
-        const r = Math.max(0.1, p.size * p.life);
-        ctx.fillStyle = `hsl(${p.hue}, 95%, 58%)`;
-        // cheap soft glow: wide faint circle + small bright core (no shadowBlur)
-        ctx.globalAlpha = a * 0.35;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r*2.2, 0, Math.PI*2);
-        ctx.fill();
-        ctx.globalAlpha = a;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r, 0, Math.PI*2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-      requestAnimationFrame(animateTrail);
-    }
-    animateTrail();
-
-    // ── AMBIENT EMBER RAIN ────────────────────
-    const emberCanvas = document.getElementById('ember-canvas');
-    const ectx = emberCanvas ? emberCanvas.getContext('2d') : null;
-    if (emberCanvas) { emberCanvas.width=innerWidth; emberCanvas.height=innerHeight; window.addEventListener('resize',()=>{emberCanvas.width=innerWidth;emberCanvas.height=innerHeight;}); }
+    // ── EMBERS (ambient) + CURSOR TRAIL ───────
+    const trailCanvas = $('trail-canvas'), tctx = trailCanvas.getContext('2d');
+    const emberCanvas = $('ember-canvas'), ectx = emberCanvas.getContext('2d');
+    let particles = [], lastTrailX = -99, lastTrailY = -99;
     const embers = [];
-    const EMBER_COUNT = 26;
+    const EMBER_COUNT = 20;
+    function sizeFxCanvases() {
+      trailCanvas.width = emberCanvas.width = innerWidth;
+      trailCanvas.height = emberCanvas.height = innerHeight;
+    }
     function newEmber(randomY) {
       const depth = Math.random();
-      return {
-        x: Math.random() * innerWidth,
-        y: randomY ? Math.random() * innerHeight : innerHeight + 10,
-        size: 0.8 + depth * 3.5,
-        speed: 0.3 + depth * 1.2,
-        drift: (Math.random() - 0.5) * 0.4,
-        opacity: 0.15 + depth * 0.55,
-        hue: 15 + Math.random() * 25,
-        depth,
-        flicker: Math.random() * Math.PI * 2
-      };
+      return { x: Math.random() * innerWidth, y: randomY ? Math.random() * innerHeight : innerHeight + 10,
+        size: 0.8 + depth * 3.2, speed: 0.3 + depth * 1.1, drift: (Math.random() - 0.5) * 0.4,
+        opacity: 0.12 + depth * 0.5, hue: 15 + Math.random() * 25, flicker: Math.random() * Math.PI * 2 };
     }
-    function initEmbers() { for (let i=0;i<EMBER_COUNT;i++) embers.push(newEmber(true)); }
-    (function emberLoop() {
-      if (!ectx) { requestAnimationFrame(emberLoop); return; }
-      ectx.clearRect(0, 0, emberCanvas.width, emberCanvas.height);
-      embers.forEach((e, i) => {
-        e.y -= e.speed;
-        e.x += e.drift;
-        e.flicker += 0.04;
-        const flick = 0.85 + Math.sin(e.flicker) * 0.15;
-        if (e.y < -10) embers[i] = newEmber(false);
-        const a = e.opacity * flick, r = Math.max(0.1, e.size * flick);
-        ectx.fillStyle = `hsl(${e.hue}, 95%, 60%)`;
-        ectx.globalAlpha = a * 0.35;
-        ectx.beginPath();
-        ectx.arc(e.x, e.y, r * 2.2, 0, Math.PI*2);
-        ectx.fill();
-        ectx.globalAlpha = a;
-        ectx.beginPath();
-        ectx.arc(e.x, e.y, r, 0, Math.PI*2);
-        ectx.fill();
-      });
-      ectx.globalAlpha = 1;
-      requestAnimationFrame(emberLoop);
-    })();
-    initEmbers();
+    for (let i = 0; i < EMBER_COUNT; i++) embers.push(newEmber(true));
 
-    // ── TITLE PARALLAX ────────────────────────
-    let mouseX=0, mouseY=0, curMouseX=0, curMouseY=0;
-    document.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; });
-    (function parallaxLoop(){
-      curMouseX += (mouseX-curMouseX)*0.06;
-      curMouseY += (mouseY-curMouseY)*0.06;
-      const cx=(curMouseX/innerWidth-0.5)*2;
-      const cy=(curMouseY/innerHeight-0.5)*2;
-      const heroMain=document.querySelector('.hero-img');
-      const heroAccentEl=document.querySelector('.hero-accent');
-      if(heroMain) heroMain.style.transform=`scale(1.02) translate(${cx*-8}px,${cy*-4}px)`;
-      if(heroAccentEl) heroAccentEl.style.transform=`translate(${cx*-14}px,${cy*-7}px)`;
-      requestAnimationFrame(parallaxLoop);
-    })();
+    function drawGlow(c, x, y, r, hue, a) {
+      c.fillStyle = `hsl(${hue}, 95%, 58%)`;
+      c.globalAlpha = a * 0.35; c.beginPath(); c.arc(x, y, r * 2.2, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = a;        c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    }
+
+    document.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      mouseX = e.clientX; mouseY = e.clientY;
+      // a quiet ember trail: only spawns on real movement, never a firehose
+      if (!reduced() && Math.hypot(e.clientX - lastTrailX, e.clientY - lastTrailY) > 9) {
+        lastTrailX = e.clientX; lastTrailY = e.clientY;
+        particles.push({ x: e.clientX, y: e.clientY, life: 1, size: Math.random() * 1.3 + 0.6,
+          vx: (Math.random() - 0.5) * 0.5, vy: -Math.random() * 0.8 - 0.2, hue: 10 + Math.random() * 25, flicker: Math.random() * 6 });
+        if (particles.length > 40) particles.shift();
+      }
+      kick();
+    }, { passive: true });
+
+    // ── ONE ANIMATION LOOP ───────────────────
+    // Everything canvas/parallax runs in a single rAF that goes idle when nothing moves.
+    const heroImg = $('archive-name');
+    const heroAccentEl = document.querySelector('.hero-accent');
+    let rafId = null, heroTX = 0, heroTY = 0;
+    function kick() { if (!rafId) rafId = requestAnimationFrame(tick); }
+    function tick() {
+      rafId = null;
+      let busy = false;
+      const calm = reduced();
+
+      // film scrub (eased; instant for reduced motion)
+      if (Math.abs(targetFrame - currentFrame) > 0.02 && !calm) { currentFrame += (targetFrame - currentFrame) * 0.3; busy = true; frameDirty = true; }
+      else if (currentFrame !== targetFrame) { currentFrame = targetFrame; frameDirty = true; }
+
+      // pointer parallax (fine pointers only, small amplitude)
+      if (FINE_MQ.matches && !calm) {
+        const dx = mouseX - parX, dy = mouseY - parY;
+        if (Math.abs(dx) + Math.abs(dy) > 0.3) { parX += dx * 0.07; parY += dy * 0.07; busy = true; frameDirty = true; }
+        const cx = (parX / innerWidth - 0.5) * 2, cy = (parY / innerHeight - 0.5) * 2;
+        if (Math.abs(cx - heroTX) > 0.001 || Math.abs(cy - heroTY) > 0.001) {
+          heroTX = cx; heroTY = cy;
+          heroImg.style.transform = `translate3d(${(cx * -7).toFixed(2)}px,${(cy * -3.5).toFixed(2)}px,0)`;
+          heroAccentEl.style.transform = `translate3d(${(cx * -11).toFixed(2)}px,${(cy * -5).toFixed(2)}px,0) skewX(-2deg)`;
+        }
+      }
+      if (frameDirty && framesLoaded) { drawFrame(currentFrame); frameDirty = false; }
+
+      if (!calm && !document.hidden) {
+        // ambient embers
+        ectx.clearRect(0, 0, emberCanvas.width, emberCanvas.height);
+        embers.forEach((e, i) => {
+          e.y -= e.speed; e.x += e.drift; e.flicker += 0.04;
+          if (e.y < -10) embers[i] = newEmber(false);
+          const flick = 0.85 + Math.sin(e.flicker) * 0.15;
+          drawGlow(ectx, e.x, e.y, Math.max(0.1, e.size * flick), e.hue, e.opacity * flick);
+        });
+        ectx.globalAlpha = 1;
+        // cursor trail
+        tctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+        if (particles.length) {
+          particles = particles.filter(p => p.life > 0.02);
+          particles.forEach(p => {
+            p.life -= 0.028; p.x += p.vx; p.y += p.vy; p.vy -= 0.006; p.flicker += 0.15;
+            drawGlow(tctx, p.x, p.y, Math.max(0.1, p.size * p.life), p.hue, p.life * 0.55 * (0.8 + Math.sin(p.flicker) * 0.2));
+          });
+          tctx.globalAlpha = 1;
+        }
+        busy = true; // embers are always drifting
+      }
+      if (busy) kick();
+    }
+    REDUCED_MQ.addEventListener('change', () => { ectx.clearRect(0, 0, emberCanvas.width, emberCanvas.height); tctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height); kick(); });
+    document.addEventListener('visibilitychange', kick);
 
     // ── SOUND ────────────────────────────────
-    let soundEnabled = false;
-    const muteBtn = document.getElementById('mute-btn');
-    const bgMusic = document.getElementById('bg-music');
+    let soundEnabled = false, actx = null;
+    const audioCtx = () => (actx ||= new (window.AudioContext || window.webkitAudioContext)());
     bgMusic.volume = 0.4;
-    bgMusic.preload = 'auto';
-    bgMusic.load();
     muteBtn.addEventListener('click', () => {
       soundEnabled = !soundEnabled;
-      muteBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      muteBtn.innerHTML = soundEnabled ? ICON.soundOn : ICON.soundOff;
+      muteBtn.setAttribute('aria-pressed', String(soundEnabled));
+      muteBtn.title = soundEnabled ? 'Music on' : 'Music';
       if (soundEnabled) {
-        bgMusic.play().then(() => {
-          console.log('bg music playing, readyState:', bgMusic.readyState, 'duration:', bgMusic.duration);
-        }).catch(err => {
-          console.error('bg music failed to play:', err.name, err.message);
-        });
+        bgMusic.preload = 'auto';
+        bgMusic.play().catch(err => console.error('bg music failed to play:', err.name, err.message));
+        playClick();
       } else {
         bgMusic.pause();
       }
     });
-
-    // ── HIDDEN MESSAGE ───────────────────────
-    const easterDot = document.getElementById('easter-dot');
-    const easterOverlay = document.getElementById('easter-overlay');
-    if (easterDot && easterOverlay) {
-      easterDot.addEventListener('click', () => {
-        easterOverlay.classList.add('active');
-        setTimeout(() => easterOverlay.classList.remove('active'), 4000);
-      });
-      easterOverlay.addEventListener('click', () => easterOverlay.classList.remove('active'));
-    }
-
-    function playClick() {
+    function blip(f0, f1, vol, dur) {
       if (!soundEnabled) return;
       try {
-        const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx2.createOscillator();
-        const gain = ctx2.createGain();
-        osc.connect(gain); gain.connect(ctx2.destination);
-        osc.frequency.setValueAtTime(800, ctx2.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(400, ctx2.currentTime + 0.06);
-        gain.gain.setValueAtTime(0.08, ctx2.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx2.currentTime + 0.08);
-        osc.start(); osc.stop(ctx2.currentTime + 0.08);
-      } catch(e) {}
+        const c = audioCtx(), osc = c.createOscillator(), gain = c.createGain();
+        osc.connect(gain); gain.connect(c.destination);
+        osc.frequency.setValueAtTime(f0, c.currentTime);
+        if (f1) osc.frequency.exponentialRampToValueAtTime(f1, c.currentTime + dur * 0.75);
+        gain.gain.setValueAtTime(vol, c.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+        osc.start(); osc.stop(c.currentTime + dur);
+      } catch (e) {}
     }
-
-    function playHover() {
-      if (!soundEnabled) return;
-      try {
-        const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx2.createOscillator();
-        const gain = ctx2.createGain();
-        osc.connect(gain); gain.connect(ctx2.destination);
-        osc.frequency.setValueAtTime(600, ctx2.currentTime);
-        gain.gain.setValueAtTime(0.03, ctx2.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx2.currentTime + 0.04);
-        osc.start(); osc.stop(ctx2.currentTime + 0.04);
-      } catch(e) {}
-    }
+    const playClick = () => blip(800, 400, 0.08, 0.08);
+    const playHover = () => blip(600, 0, 0.03, 0.04);
 
     // ── TOAST ────────────────────────────────
-    function showToast(title, sub='', icon='✓') {
-      document.getElementById('toast-title').textContent = title;
-      document.getElementById('toast-sub').textContent = sub;
-      document.getElementById('toast-icon').textContent = icon;
+    let toastTimer = null;
+    function showToast(title, sub = '', icon = '✓', kind = '') {
+      $('toast-title').textContent = title;
+      $('toast-sub').textContent = sub;
+      $('toast-icon').textContent = icon;
+      toastEl.classList.toggle('is-error', kind === 'error');
       toastEl.classList.add('show');
-      setTimeout(() => toastEl.classList.remove('show'), 3000);
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), kind === 'error' ? 5200 : 2800);
     }
 
-    // ── XP LOADING BAR ───────────────────────
-    function showXP() {
-      xpWrap.style.opacity = '1';
-      xpFill.style.width = '0%';
-      let pct = 0;
-      const interval = setInterval(() => {
-        pct += Math.random() * 8 + 2;
-        if (pct >= 100) { pct = 100; clearInterval(interval); setTimeout(() => { xpWrap.style.opacity = '0'; }, 400); }
-        xpFill.style.width = pct + '%';
-      }, 80);
+    // Every write goes through here so a failed save is never silent.
+    async function write(fn, fail = 'Couldn’t save that') {
+      try { await fn(); return true; }
+      catch (e) {
+        console.error(e);
+        showToast(fail, isDenied(e) ? 'The archive is read-only right now' : 'Check your connection and try again', '!', 'error');
+        return false;
+      }
     }
 
-    // ── COUNT UP ANIMATION ───────────────────
-    function countUp(el, target) {
-      let current = 0;
-      const step = Math.ceil(target / 30);
-      const timer = setInterval(() => {
-        current = Math.min(current + step, target);
-        el.textContent = current;
-        if (current >= target) clearInterval(timer);
-      }, 30);
+    // ── OVERLAYS: focus, Escape, stacking ─────
+    const overlayStack = [];
+    const backgroundEls = [ribbonEl, heroEl, shelfWrapEl, gridWrapEl, $('easter-dot')];
+    const FOCUSABLE = 'button:not([disabled]),input:not([disabled]),textarea,select,[tabindex]:not([tabindex="-1"])';
+    const focusables = el => [...el.querySelectorAll(FOCUSABLE)].filter(n => n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden');
+
+    function openOverlay(el, { focus, onEscape } = {}) {
+      if (overlayStack.some(o => o.el === el)) return;
+      const below = overlayStack.at(-1);
+      if (below) below.el.inert = true; else backgroundEls.forEach(n => n.inert = true);
+      overlayStack.push({ el, onEscape, returnFocus: document.activeElement });
+      el.classList.add('active');
+      requestAnimationFrame(() => (focus || focusables(el)[0])?.focus({ preventScroll: true }));
+    }
+    function closeOverlay(el, { restoreFocus = true } = {}) {
+      const i = overlayStack.findIndex(o => o.el === el);
+      if (i < 0) return;
+      const [o] = overlayStack.splice(i, 1);
+      el.classList.remove('active');
+      const below = overlayStack.at(-1);
+      if (below) below.el.inert = false; else backgroundEls.forEach(n => n.inert = false);
+      if (restoreFocus && o.returnFocus?.isConnected) o.returnFocus.focus({ preventScroll: true });
+    }
+    document.addEventListener('keydown', e => {
+      const top = overlayStack.at(-1);
+      if (!top) return;
+      if (e.key === 'Escape') { e.preventDefault(); top.onEscape ? top.onEscape() : closeOverlay(top.el); return; }
+      if (e.key === 'Tab') {
+        const f = focusables(top.el);
+        if (!f.length) return;
+        const first = f[0], last = f.at(-1);
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+    // click on the dimmed backdrop closes (never a click that started inside the panel)
+    function closeOnBackdrop(el, close) {
+      let downOnBackdrop = false;
+      el.addEventListener('pointerdown', e => { downOnBackdrop = e.target === el; });
+      el.addEventListener('click', e => { if (e.target === el && downOnBackdrop) close(); });
+    }
+
+    // ── HIDDEN MESSAGE ───────────────────────
+    const easterDot = $('easter-dot'), easterOverlay = $('easter-overlay');
+    let easterTimer;
+    const hideEaster = () => { easterOverlay.classList.remove('active'); clearTimeout(easterTimer); };
+    easterDot.addEventListener('click', () => {
+      easterOverlay.classList.add('active');
+      clearTimeout(easterTimer);
+      easterTimer = setTimeout(hideEaster, 4000);
+    });
+    easterOverlay.addEventListener('click', hideEaster);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && easterOverlay.classList.contains('active')) hideEaster(); });
+
+    // ── LOADING BAR (driven by the real request) ──
+    let xpRaf = null, xpShowTimer = null;
+    function setXP(p) { xpFill.style.transform = `scaleX(${p})`; }
+    function startLoading() {
+      cancelAnimationFrame(xpRaf); clearTimeout(xpShowTimer);
+      xpFill.style.transition = 'none'; setXP(0);
+      $('xp-label').textContent = 'Dusting off the shelf';
+      // only show the bar if loading actually takes a moment
+      xpShowTimer = setTimeout(() => xpWrap.classList.add('show'), 140);
+      const t0 = performance.now();
+      const step = now => { setXP(0.92 * (1 - Math.exp(-(now - t0) / 900))); xpRaf = requestAnimationFrame(step); };
+      xpRaf = requestAnimationFrame(step);
+    }
+    function finishLoading() {
+      cancelAnimationFrame(xpRaf); clearTimeout(xpShowTimer);
+      xpFill.style.transition = 'transform .22s cubic-bezier(0.16,1,0.3,1)'; setXP(1);
+      setTimeout(() => xpWrap.classList.remove('show'), 260);
+    }
+
+    // ── COUNTERS ─────────────────────────────
+    // Numbers roll from their current value to the new one — never back to zero.
+    function animateNumber(el, to) {
+      const from = parseInt(el.textContent, 10);
+      const hadValue = !isNaN(from);
+      if (el._raf) cancelAnimationFrame(el._raf);
+      if (!hadValue || from === to || reduced()) {
+        if (!hadValue && !reduced() && to > 0) return rollFrom(el, 0, to, 900);
+        el.textContent = to; return;
+      }
+      rollFrom(el, from, to, 520);
+      el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+    }
+    function rollFrom(el, from, to, dur) {
+      const t0 = performance.now();
+      const step = now => {
+        const t = Math.min(1, (now - t0) / dur), k = 1 - Math.pow(1 - t, 4);
+        el.textContent = Math.round(from + (to - from) * k);
+        if (t < 1) el._raf = requestAnimationFrame(step);
+      };
+      el._raf = requestAnimationFrame(step);
+    }
+    function updateCounts() {
+      animateNumber(totalEl, completedGames.length);
+      animateNumber(backlogEl, backlogGames.length);
+      animateNumber(reviewedEl, completedGames.filter(g => g.review).length);
     }
 
     // ── ARCHIVE NAME ─────────────────────────
-    nameImg.addEventListener('click', () => {
-      document.getElementById('edit-name-overlay').classList.add('active');
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => document.getElementById('edit-name-input').focus(), 100);
+    const editNameOverlay = $('edit-name-overlay'), editNameInput = $('edit-name-input'), editNameError = $('edit-name-error');
+    nameBtn.addEventListener('click', () => {
+      editNameInput.value = archiveName; editNameError.textContent = ''; editNameInput.classList.remove('is-invalid');
+      openOverlay(editNameOverlay, { focus: editNameInput });
+      requestAnimationFrame(() => editNameInput.select());
       playClick();
     });
-
-    document.getElementById('edit-name-close').addEventListener('click', () => { document.getElementById('edit-name-overlay').classList.remove('active'); document.body.style.overflow = ''; });
-    document.getElementById('edit-name-overlay').addEventListener('click', e => { if (e.target === document.getElementById('edit-name-overlay')) { document.getElementById('edit-name-overlay').classList.remove('active'); document.body.style.overflow = ''; } });
-    document.getElementById('btn-save-name').addEventListener('click', async () => {
-      const name = document.getElementById('edit-name-input').value.trim();
-      if (!name) return;
-      await setDoc(doc(db,'meta','archive'), {name});
+    $('edit-name-close').addEventListener('click', () => closeOverlay(editNameOverlay));
+    closeOnBackdrop(editNameOverlay, () => closeOverlay(editNameOverlay));
+    async function saveArchiveName() {
+      const name = editNameInput.value.trim();
+      if (!name) { editNameError.textContent = 'It needs a name.'; editNameInput.classList.add('is-invalid'); editNameInput.focus(); return; }
+      const btn = $('btn-save-name'); btn.classList.add('is-busy');
+      const ok = await write(() => setDoc(doc(db,'meta','archive'), {name}), 'Name not saved');
+      btn.classList.remove('is-busy');
+      if (!ok) return;
+      archiveName = name;
       document.title = name + "'S GAME ARCHIVE";
-      document.getElementById('edit-name-overlay').classList.remove('active');
-      document.body.style.overflow = '';
-      showToast('Archive name updated', '', '✎');
+      closeOverlay(editNameOverlay);
+      showToast('Archive renamed', name.toUpperCase() + "'S GAME ARCHIVE", '✎');
       playClick();
-    });
+    }
+    $('btn-save-name').addEventListener('click', saveArchiveName);
+    editNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveArchiveName(); });
+    editNameInput.addEventListener('input', () => { editNameError.textContent = ''; editNameInput.classList.remove('is-invalid'); });
 
     // ── LOAD GAMES ───────────────────────────
     async function loadAll() {
-      showXP();
+      loadState = 'loading';
+      startLoading();
+      renderLoading();
       try {
         const [cSnap, bSnap] = await Promise.all([
           getDocs(query(collection(db,'games'), orderBy('number'))),
@@ -575,260 +699,419 @@
           const oSnap = await getDocs(query(collection(db,'ours'), orderBy('number')));
           oursGames = oSnap.docs.map(d => ({id:d.id,...d.data()}));
         } catch(e) { oursGames = []; console.log('ours collection empty or not created yet'); }
+        loadState = 'ready';
+        finishLoading();
         updateCounts();
         buildGenreBar();
         buildPills();
-        renderCurrentView();
+        renderCurrentView('enter');
       } catch(e) {
-        shelfEl.innerHTML = '<div class="empty" style="color:#e01f1f;">FAILED TO LOAD. CHECK CONSOLE.</div>';
         console.error(e);
+        loadState = 'error'; loadError = e;
+        finishLoading();
+        [totalEl, backlogEl, reviewedEl].forEach(el => el.textContent = '–');
+        renderCurrentView();
       }
+      startFramePreload();
     }
-
-    function updateCounts() {
-      countUp(totalEl, completedGames.length);
-      countUp(backlogEl, backlogGames.length);
-      countUp(reviewedEl, completedGames.filter(g=>g.review).length);
+    async function loadArchiveName() {
+      try {
+        const snap = await getDoc(doc(db,'meta','archive'));
+        const name = snap.exists() ? snap.data()?.name : '';
+        if (name) { archiveName = name; document.title = name + "'S GAME ARCHIVE"; }
+      } catch (e) { /* the name is decorative; the archive works without it */ }
     }
 
     // ── TABS ─────────────────────────────────
-    let lastTabIndex = 0;
-    const tabOrder = ['completed','backlog','ours'];
+    let lastTabIndex = 0, tabSwitchToken = 0;
+    function positionTabIndicator(instant) {
+      const btn = tabGroupEl.querySelector('.tab.active');
+      if (!btn) return;
+      if (instant) tabIndicator.style.transition = 'none';
+      tabIndicator.style.transform = `translateX(${btn.offsetLeft}px) scaleX(${btn.offsetWidth})`;
+      if (instant) { void tabIndicator.offsetWidth; tabIndicator.style.transition = ''; }
+    }
+    new ResizeObserver(() => positionTabIndicator(true)).observe(tabGroupEl);
+
+    function setTab(tab, { keepReviewed = false, then } = {}) {
+      const newIndex = tabOrder.indexOf(tab);
+      const dir = newIndex >= lastTabIndex ? 1 : -1;
+      lastTabIndex = newIndex;
+      activeTab = tab;
+      activeFilter = 'all'; searchQuery = ''; searchEl.value = ''; sortEl.value = 'number'; activeSort = 'number';
+      searchWrap.classList.remove('has-query');
+      if (!keepReviewed) { reviewedFilter = false; reviewedStat.classList.remove('stat-active'); reviewedStat.setAttribute('aria-pressed', 'false'); }
+      document.querySelectorAll('.tab').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+      positionTabIndicator();
+      targetFrame = 0; kick();
+
+      const token = ++tabSwitchToken;
+      const view = gridMode ? gridEl : shelfEl;
+      const swap = () => {
+        buildGenreBar(); buildPills();
+        shelfEl.scrollLeft = 0; gridWrapEl.scrollTop = 0;
+        renderCurrentView('swap');
+        then?.();
+      };
+      if (reduced()) { swap(); return; }
+      // out: quick, toward the direction of travel; in: settles from the other side
+      view.getAnimations().forEach(a => a.cancel());
+      const out = view.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${dir * -28}px)` }], { duration: 150, easing: EASE_IN, fill: 'forwards' });
+      out.finished.then(() => {
+        if (token !== tabSwitchToken) return;
+        swap();
+        out.cancel();
+        view.animate([{ opacity: 0, transform: `translateX(${dir * 28}px)` }, { opacity: 1, transform: 'none' }], { duration: 340, easing: EASE_OUT });
+      }).catch(() => {});
+    }
     document.querySelectorAll('.tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeTab = btn.dataset.tab;
-        activeFilter = 'all'; searchQuery = ''; searchEl.value = ''; sortEl.value = 'number'; activeSort = 'number';
-        reviewedFilter = false;
-        document.getElementById('reviewed-stat').classList.remove('stat-active');
-        targetFrame = 0;
-        currentFrame = 0;
-
-        // fly transition: direction depends on which tab we're moving toward
-        const newIndex = tabOrder.indexOf(activeTab);
-        const dir = newIndex >= lastTabIndex ? 1 : -1; // 1 = moving right (fly out left), -1 = moving left (fly out right)
-        lastTabIndex = newIndex;
-
-        shelfEl.style.transition = 'opacity 0.22s var(--ease), transform 0.22s var(--ease)';
-        shelfEl.style.opacity = '0';
-        shelfEl.style.transform = `translateX(${dir * -60}px)`;
-        setTimeout(() => {
-          buildGenreBar(); buildPills(); renderCurrentView();
-          shelfEl.style.transition = 'none';
-          shelfEl.style.transform = `translateX(${dir * 60}px)`;
-          // force reflow so the browser registers the start position before animating in
-          void shelfEl.offsetWidth;
-          shelfEl.style.transition = 'opacity 0.28s var(--ease), transform 0.28s var(--ease)';
-          shelfEl.style.opacity = '1';
-          shelfEl.style.transform = 'translateX(0)';
-        }, 220);
-        playClick();
-      });
+      btn.tabIndex = btn.classList.contains('active') ? 0 : -1;
+      btn.addEventListener('click', () => { if (btn.dataset.tab !== activeTab || reviewedFilter) setTab(btn.dataset.tab); playClick(); });
+    });
+    // tablist arrow-key navigation
+    tabGroupEl.addEventListener('keydown', e => {
+      const tabs = [...tabGroupEl.querySelectorAll('.tab')];
+      const i = tabs.indexOf(document.activeElement);
+      if (i < 0) return;
+      const next = e.key === 'ArrowRight' ? tabs[(i + 1) % tabs.length] : e.key === 'ArrowLeft' ? tabs[(i - 1 + tabs.length) % tabs.length] : null;
+      if (next) { e.preventDefault(); next.focus(); next.click(); }
     });
 
     // ── GENRE BAR ────────────────────────────
     function buildGenreBar() {
-      const games = activeTab === 'completed' ? completedGames : activeTab === 'backlog' ? backlogGames : oursGames;
+      const games = listFor(activeTab);
       const counts = {};
-      games.forEach(g => { const genre=(g.genre||'unknown').split('·')[0].trim().toLowerCase(); counts[genre]=(counts[genre]||0)+1; });
+      games.forEach(g => { const genre = (firstGenre(g) || 'unknown').toLowerCase(); counts[genre] = (counts[genre] || 0) + 1; });
       const total = games.length || 1;
       genreBarEl.innerHTML = '';
-      Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6).forEach(([,count]) => {
-        const seg=document.createElement('div'); seg.className='genre-seg'; seg.style.width=(count/total*100).toFixed(1)+'%'; genreBarEl.appendChild(seg);
+      Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,6).forEach(([genre, count]) => {
+        const seg = document.createElement('div'); seg.className = 'genre-seg';
+        seg.style.flexBasis = (count / total * 100).toFixed(1) + '%';
+        seg.title = `${genre} · ${count}`;
+        genreBarEl.appendChild(seg);
       });
     }
 
     // ── PILLS ────────────────────────────────
     function buildPills() {
-      const games = activeTab === 'completed' ? completedGames : activeTab === 'backlog' ? backlogGames : oursGames;
-      const genres = [...new Set(games.map(g=>(g.genre||'').split('·')[0].trim().toLowerCase()).filter(Boolean))].sort();
-      pillsEl.innerHTML = '<button class="pill active" data-filter="all">ALL</button>';
-      genres.slice(0,8).forEach(genre => {
-        const btn=document.createElement('button'); btn.className='pill'; btn.dataset.filter=genre; btn.textContent=genre.toUpperCase(); pillsEl.appendChild(btn);
+      const games = listFor(activeTab);
+      const genres = [...new Set(games.map(g => firstGenre(g).toLowerCase()).filter(Boolean))].sort();
+      if (activeFilter !== 'all' && !genres.includes(activeFilter)) activeFilter = 'all';
+      pillsEl.innerHTML = '';
+      ['all', ...genres.slice(0, 8)].forEach(genre => {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'pill'; btn.dataset.filter = genre;
+        btn.textContent = genre === 'all' ? 'All' : genre;
+        const on = genre === activeFilter;
+        btn.classList.toggle('active', on); btn.setAttribute('aria-pressed', String(on));
+        pillsEl.appendChild(btn);
       });
-      pillsEl.querySelectorAll('.pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          pillsEl.querySelectorAll('.pill').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-          activeFilter=btn.dataset.filter; renderCurrentView(); playClick();
-        });
-      });
+      pillsEl.scrollLeft = 0;
     }
-
-    document.getElementById('reviewed-stat').addEventListener('click', () => {
-      reviewedFilter = !reviewedFilter;
-      const statEl = document.getElementById('reviewed-stat');
-      if (reviewedFilter) {
-        statEl.classList.add('stat-active');
-        if (activeTab !== 'completed') {
-          document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-          document.querySelector('.tab[data-tab="completed"]').classList.add('active');
-          activeTab = 'completed';
-          lastTabIndex = tabOrder.indexOf('completed');
-        }
-        activeFilter = 'all'; searchQuery = ''; searchEl.value = '';
-        buildGenreBar(); buildPills();
-      } else {
-        statEl.classList.remove('stat-active');
-      }
-      renderCurrentView();
+    function setFilter(genre) {
+      activeFilter = genre;
+      pillsEl.querySelectorAll('.pill').forEach(b => { const on = b.dataset.filter === genre; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+      renderCurrentView('update');
+    }
+    pillsEl.addEventListener('click', e => {
+      const btn = e.target.closest('.pill');
+      if (!btn) return;
+      setFilter(btn.dataset.filter);
+      btn.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' });
       playClick();
     });
 
-    // ── RENDER SHELF ─────────────────────────
+    function setReviewed(on) {
+      reviewedFilter = on;
+      reviewedStat.classList.toggle('stat-active', on);
+      reviewedStat.setAttribute('aria-pressed', String(on));
+    }
+    reviewedStat.addEventListener('click', () => {
+      setReviewed(!reviewedFilter);
+      if (reviewedFilter && activeTab !== 'completed') { setTab('completed', { keepReviewed: true }); }
+      else {
+        if (reviewedFilter) { activeFilter = 'all'; searchQuery = ''; searchEl.value = ''; searchWrap.classList.remove('has-query'); buildGenreBar(); buildPills(); }
+        renderCurrentView('update');
+      }
+      playClick();
+    });
+
+    // ── FILTERED VIEW ────────────────────────
     function getFilteredGames() {
-      let games = activeTab==='completed' ? [...completedGames] : activeTab==='backlog' ? [...backlogGames] : [...oursGames];
-      if (activeFilter!=='all') games=games.filter(g=>(g.genre||'').toLowerCase().includes(activeFilter));
-      if (searchQuery) games=games.filter(g=>g.title.toLowerCase().includes(searchQuery.toLowerCase()));
-      if (reviewedFilter && activeTab==='completed') games=games.filter(g=>!!g.review);
-      if (activeSort==='alpha')      games.sort((a,b)=>a.title.localeCompare(b.title));
-      if (activeSort==='rating')     games.sort((a,b)=>(b.rating||0)-(a.rating||0));
-      if (activeSort==='metacritic') games.sort((a,b)=>(b.metacritic||0)-(a.metacritic||0));
+      let games = [...listFor(activeTab)];
+      if (activeFilter !== 'all') games = games.filter(g => (g.genre || '').toLowerCase().includes(activeFilter));
+      if (searchQuery) { const q = searchQuery.toLowerCase(); games = games.filter(g => (g.title || '').toLowerCase().includes(q)); }
+      if (reviewedFilter && activeTab === 'completed') games = games.filter(g => !!g.review);
+      if (activeSort === 'alpha')      games.sort((a,b) => (a.title || '').localeCompare(b.title || ''));
+      if (activeSort === 'rating')     games.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+      if (activeSort === 'metacritic') games.sort((a,b) => (b.metacritic || 0) - (a.metacritic || 0));
       return games;
     }
 
-    function renderCurrentView() { gridMode ? renderGrid(getFilteredGames()) : renderShelf(); }
-
-    function renderShelf() {
-      let games = getFilteredGames();
-
-      shelfEl.innerHTML = '';
-      if (!games.length) { shelfEl.innerHTML='<div class="empty">NO ENTRIES FOUND.</div>'; return; }
-
-      games.forEach((game, i) => {
-        const card = buildCard(game, i, false);
-        shelfEl.appendChild(card);
-      });
-
-      // Staggered entrance
-      const cards = shelfEl.querySelectorAll('.shelf-card');
-      cards.forEach((card, i) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(24px) scale(0.92)';
-        card.style.filter = 'blur(4px)';
-        setTimeout(() => {
-          card.style.transition = 'opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1), filter 0.5s cubic-bezier(0.16,1,0.3,1)';
-          card.style.opacity = '1';
-          card.style.transform = 'translateY(0) scale(1)';
-          card.style.filter = 'blur(0px)';
-        }, i * 40);
-      });
-
-      setTimeout(applyConvex, 200);
-      updateScrollbar();
+    // ── STATES: loading / empty / no results / error ──
+    function stateHTML({ kicker, title, sub, actions = [], kind = '' }) {
+      return `<div class="state ${kind}" role="status">
+        ${kicker ? `<div class="state-kicker">${kicker}</div>` : ''}
+        <div class="state-title">${title}</div>
+        ${sub ? `<div class="state-sub">${sub}</div>` : ''}
+        ${actions.length ? `<div class="state-actions">${actions.map(a => `<button type="button" class="${a.primary ? 'btn-primary is-solid' : 'btn-ghost'}" data-act="${a.act}"${a.tab ? ` data-tab="${a.tab}"` : ''}>${a.label}</button>`).join('')}</div>` : ''}
+      </div>`;
     }
-
-    function renderGrid(games) {
-      gridEl.innerHTML = '';
-      if (!games.length) { gridEl.innerHTML='<div class="empty">NO ENTRIES FOUND.</div>'; return; }
-      games.forEach((game, i) => {
-        const card = buildCard(game, i, true);
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(16px) scale(0.94)';
-        card.style.filter = 'blur(3px)';
-        gridEl.appendChild(card);
-        setTimeout(() => {
-          card.style.transition = 'opacity .4s cubic-bezier(.16,1,.3,1), transform .4s cubic-bezier(.16,1,.3,1), filter .4s cubic-bezier(.16,1,.3,1)';
-          card.style.opacity = '1';
-          card.style.transform = 'translateY(0) scale(1)';
-          card.style.filter = 'blur(0px)';
-        }, i * 25);
-      });
-    }
-
-    document.getElementById('btn-grid').addEventListener('click', () => {
-      gridMode = !gridMode;
-      const btn = document.getElementById('btn-grid');
-      if (gridMode) {
-        shelfWrapEl.style.display = 'none';
-        gridWrapEl.style.display = 'block';
-        renderGrid(getFilteredGames());
-        btn.textContent = '≡';
-      } else {
-        shelfWrapEl.style.display = 'block';
-        gridWrapEl.style.display = 'none';
-        renderCurrentView();
-        btn.textContent = '⊞';
+    function emptyState() {
+      const tabLabel = TABS[activeTab].label;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const elsewhere = tabOrder.filter(t => t !== activeTab)
+          .map(t => ({ t, n: listFor(t).filter(g => (g.title || '').toLowerCase().includes(q)).length }))
+          .filter(x => x.n);
+        const actions = elsewhere.map(x => ({ act: 'goto', tab: x.t, label: `Look in ${TABS[x.t].label}`, primary: true }));
+        if (activeFilter !== 'all') actions.push({ act: 'all-genres', label: 'All genres' });
+        actions.push({ act: 'clear-search', label: 'Clear search' });
+        if (!elsewhere.length) actions.push({ act: 'add', label: '+ Add it' });
+        const where = elsewhere.map(x => `${x.n} in ${TABS[x.t].label}`).join(' and ');
+        return stateHTML({
+          kicker: `// 0 results in ${esc(tabLabel)}`,
+          title: `Nothing called “${esc(searchQuery)}”`,
+          sub: elsewhere.length ? `But there ${elsewhere[0].n === 1 && elsewhere.length === 1 ? 'is' : 'are'} ${where}.` : activeFilter !== 'all' ? `Not in ${esc(activeFilter)}, anyway.` : 'Check the spelling, or file it as a new entry.',
+          actions,
+        });
       }
+      if (reviewedFilter) return stateHTML({ kicker: '// 0 reviewed', title: 'No reviews yet', sub: 'Open a game and leave a verdict. Even one line counts.', actions: [{ act: 'show-all', label: 'Show everything', primary: true }] });
+      if (activeFilter !== 'all') return stateHTML({ kicker: '// 0 entries', title: `No ${esc(activeFilter)} here`, actions: [{ act: 'all-genres', label: 'All genres', primary: true }] });
+      const copy = {
+        completed: ['Nothing cleared yet', 'Go finish something. The shelf will wait.'],
+        backlog:   ['The backlog is empty', 'Suspicious. Add the next obsession.'],
+        ours:      ['No games together yet', 'Pick one to play together ♥'],
+      }[activeTab];
+      return stateHTML({ kicker: '// 000 entries', title: copy[0], sub: copy[1], actions: [{ act: 'add', label: '+ Add a game', primary: true }] });
+    }
+    function errorState() {
+      const code = loadError?.code ? esc(String(loadError.code)) : 'unreachable';
+      return stateHTML({
+        kind: 'state-error',
+        kicker: `// ERR · ${code}`,
+        title: 'The archive won’t open',
+        sub: isDenied(loadError) ? 'The database is refusing to open the doors right now, so nothing can load.' : 'Couldn’t reach the database. Check the connection and try again.',
+        actions: [{ act: 'retry', label: 'Try again', primary: true }],
+      });
+    }
+    function setStatus(el, html) {
+      if (el._html === html) return; // don't replay the entrance on every keystroke
+      el._html = html; el.innerHTML = html;
+    }
+    function onStateAction(e) {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      const act = btn.dataset.act;
       playClick();
-    });
+      if (act === 'retry') loadAll();
+      else if (act === 'clear-search') { clearSearch(); searchEl.focus(); }
+      else if (act === 'all-genres') setFilter('all');
+      else if (act === 'show-all') { setReviewed(false); renderCurrentView('update'); }
+      else if (act === 'goto') { const q = searchQuery; setTab(btn.dataset.tab, { then: () => { searchEl.value = q; applySearch(q); } }); }
+      else if (act === 'add') openAdd(searchQuery);
+    }
+    shelfStatusEl.addEventListener('click', onStateAction);
+    gridStatusEl.addEventListener('click', onStateAction);
+
+    function renderLoading() {
+      setStatus(shelfStatusEl, ''); setStatus(gridStatusEl, '');
+      shelfEl.replaceChildren(...Array.from({ length: 14 }, () => {
+        const g = document.createElement('div');
+        g.className = 'shelf-card is-ghost'; g.setAttribute('aria-hidden', 'true');
+        g.innerHTML = '<span class="card-tilt"><span class="card-inner"><span class="card-cover-wrap"></span><span class="card-body"></span></span></span>';
+        return g;
+      }));
+      gridEl.replaceChildren();
+      if (gridMode) setStatus(gridStatusEl, stateHTML({ kicker: '// loading', title: 'Dusting off the shelf…' }));
+      measureShelf();
+    }
+
+    // ── RENDER (keyed, with FLIP) ────────────
+    // Cards are reused between renders, so search/filter/sort move real elements
+    // instead of rebuilding the shelf: survivors glide to their new slot, newcomers
+    // fade up, leavers fade out in place.
+    const shelfCache = new Map(), gridCache = new Map();
+    let viewRenderedFor = { shelf: null, grid: null };
+
+    function renderCurrentView(mode = 'update') {
+      const games = loadState === 'ready' ? getFilteredGames() : [];
+      if (searchQuery) searchCount.textContent = `${games.length} found`;
+      if (gridMode) renderInto(gridEl, gridStatusEl, games, true, mode);
+      else renderInto(shelfEl, shelfStatusEl, games, false, mode);
+      // the hidden view is re-synced when it's next shown
+      viewRenderedFor[gridMode ? 'shelf' : 'grid'] = null;
+      viewRenderedFor[gridMode ? 'grid' : 'shelf'] = true;
+    }
+
+    function renderInto(container, statusEl, games, isGrid, mode) {
+      if (loadState === 'loading') return;
+      if (loadState === 'error') { container.replaceChildren(); setStatus(statusEl, errorState()); if (!isGrid) measureShelf(); return; }
+      setStatus(statusEl, games.length ? '' : emptyState());
+      reconcile(container, games, isGrid, mode);
+      if (!isGrid) measureShelf();
+      updateFrameFromScroll();
+    }
+
+    function cardSig(g, i) {
+      return [g.title, g.coverUrl, g.rating, g.metacritic, !!g.review, g.status, g.genre, g.hltb, g.number || 'i' + i].join('\u0001');
+    }
+
+    function reconcile(container, games, isGrid, mode) {
+      const cache = isGrid ? gridCache : shelfCache;
+      const animate = !reduced() && (mode === 'update' || mode === 'enter');
+      const cRect = (isGrid ? gridWrapEl : container).getBoundingClientRect();
+      const inView = r => r.right > cRect.left - 40 && r.left < cRect.right + 40 && r.bottom > cRect.top - 40 && r.top < cRect.bottom + 40;
+
+      // FIRST
+      const first = new Map();
+      if (animate && mode === 'update') {
+        for (const el of container.children) if (!el.dataset.leaving) first.set(el, el.getBoundingClientRect());
+      }
+
+      // build / reuse
+      const els = games.map((g, i) => {
+        const sig = cardSig(g, i);
+        const hit = cache.get(g.id);
+        if (hit && hit.sig === sig) return hit.el;
+        const el = buildCard(g, i, isGrid);
+        if (hit?.el.parentNode === container) {
+          if (first.has(hit.el)) first.set(el, first.get(hit.el));
+          hit.el.replaceWith(el);
+        }
+        cache.set(g.id, { el, sig });
+        return el;
+      });
+      const keep = new Set(els);
+
+      // leavers: pinned where they were, then faded out
+      for (const el of [...container.children]) {
+        if (keep.has(el) || el.dataset.leaving) continue;
+        const r = first.get(el);
+        if (animate && r && inView(r)) {
+          const box = container.getBoundingClientRect();
+          el.dataset.leaving = '1'; el.tabIndex = -1; el.setAttribute('aria-hidden', 'true');
+          Object.assign(el.style, { position: 'absolute', margin: '0', zIndex: '0', pointerEvents: 'none', width: r.width + 'px',
+            left: (r.left - box.left - container.clientLeft + container.scrollLeft) + 'px',
+            top: (r.top - box.top - container.clientTop + container.scrollTop) + 'px' });
+          el.getAnimations().forEach(a => a.cancel());
+          el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.94)' }], { duration: 180, easing: EASE_IN, fill: 'forwards' })
+            .finished.then(() => { if (el.dataset.leaving) { el.remove(); resetLeaving(el); } }).catch(() => {});
+        } else {
+          el.remove();
+        }
+      }
+      // a leaver that came straight back is simply revived
+      els.forEach(el => { if (el.dataset.leaving) { resetLeaving(el); first.delete(el); } });
+
+      // order (skip the DOM work when nothing moved)
+      const current = [...container.children].filter(n => !n.dataset.leaving);
+      if (current.length !== els.length || current.some((n, i) => n !== els[i])) {
+        const frag = document.createDocumentFragment();
+        els.forEach(el => frag.appendChild(el));
+        container.appendChild(frag);
+      }
+
+      if (!animate) { els.forEach(el => el.getAnimations().forEach(a => a.cancel())); return; }
+
+      // LAST → INVERT → PLAY
+      els.forEach(el => el.getAnimations().forEach(a => a.cancel()));
+      let entering = 0;
+      for (const el of els) {
+        const r1 = el.getBoundingClientRect();
+        if (!inView(r1)) continue;
+        const r0 = first.get(el);
+        if (r0) {
+          const dx = r0.left - r1.left, dy = r0.top - r1.top;
+          if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)
+            el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 380, easing: EASE_OUT });
+        } else {
+          const delay = mode === 'enter' ? Math.min(entering, 12) * 38 : Math.min(entering, 8) * 16;
+          el.animate([{ opacity: 0, transform: 'translateY(16px) scale(.97)' }, { opacity: 1, transform: 'none' }],
+            { duration: mode === 'enter' ? 560 : 300, delay, easing: EASE_OUT, fill: 'backwards' });
+          entering++;
+        }
+      }
+    }
+    function resetLeaving(el) {
+      delete el.dataset.leaving; el.removeAttribute('aria-hidden'); el.tabIndex = 0;
+      el.getAnimations().forEach(a => a.cancel());
+      ['position', 'margin', 'zIndex', 'pointerEvents', 'width', 'left', 'top'].forEach(p => el.style[p] = '');
+    }
+
+    function setGrid(on) {
+      gridMode = on;
+      document.body.classList.toggle('is-grid', on);
+      btnGrid.setAttribute('aria-pressed', String(on));
+      btnGrid.innerHTML = on ? ICON.shelf : ICON.grid;
+      btnGrid.setAttribute('aria-label', on ? 'Shelf view' : 'Grid view');
+      btnGrid.title = on ? 'Shelf view' : 'Grid view';
+      if (on) { gridWrapEl.scrollTop = 0; renderCurrentView('enter'); }
+      else renderCurrentView(viewRenderedFor.shelf ? 'update' : 'swap');
+      updateFrameFromScroll();
+    }
+    btnGrid.addEventListener('click', () => { setGrid(!gridMode); playClick(); });
 
     // ── BUILD CARD ───────────────────────────
+    function noArtHTML(title) {
+      return `<span class="card-no-art"><span class="no-art-title">${esc(title)}</span><span class="no-art-label">No cover</span></span>`;
+    }
     function buildCard(game, index, isGrid) {
-      const card = document.createElement('div');
+      const card = document.createElement('button');
+      card.type = 'button';
       card.className = isGrid ? 'grid-card' : 'shelf-card';
       card.dataset.id = game.id;
+      const title = game.title || 'Untitled';
+      const num = pad3(game.number || index + 1);
+      const genre = firstGenre(game) || '—';
+      const label = [title, game.rating ? `rated ${game.rating} out of 10` : '', game.status === 'Playing' ? 'currently playing' : '', game.review ? 'reviewed' : ''].filter(Boolean).join(', ');
+      card.setAttribute('aria-label', label);
+      if (title.length > 16) card.title = title;
 
-      const ratingBadge = game.rating ? `<div class="card-badge">${game.rating}/10</div>` : '';
-      const metaBadge   = game.metacritic ? `<div class="card-meta" style="background:${metacriticColor(game.metacritic)}">${game.metacritic}</div>` : '';
-      const reviewDot   = game.review ? '<div class="card-dot"></div>' : '';
-      const playingDot  = game.status==='Playing' ? '<div class="card-playing-dot" title="Currently Playing"></div>' : '';
-      const hltb        = game.hltb ? `<span class="card-hltb">${game.hltb}</span>` : '';
+      const ratingBadge = game.rating ? `<span class="card-badge" title="Rated ${game.rating}/10">${game.rating}/10</span>` : '';
+      const metaBadge   = game.metacritic ? `<span class="card-meta" title="Metacritic ${game.metacritic}" style="background:${metacriticColor(game.metacritic)}">${game.metacritic}</span>` : '';
+      const reviewDot   = game.review ? '<span class="card-dot" title="Reviewed"></span>' : '';
+      const playingDot  = game.status === 'Playing' ? '<span class="card-playing-dot" title="Currently playing"></span>' : '';
+      const hltb        = game.hltb ? `<span class="card-hltb" title="How long to beat">${esc(game.hltb)}</span>` : '';
 
       card.innerHTML = `
-        <div class="card-inner">
-          <div class="card-cover-wrap">
-            ${game.coverUrl
-              ? `<img class="card-cover" src="${game.coverUrl}" alt="${game.title}" loading="lazy"/>`
-              : `<div class="card-no-art">NO ART</div>`
-            }
-            <div class="card-spotlight"></div>
-            <div class="card-reveal">
-              <div class="card-reveal-num">//${String(game.number||index+1).padStart(3,'0')}</div>
-              <div class="card-reveal-name">${game.title}</div>
-              <div class="card-reveal-cta">VIEW ENTRY ›</div>
-            </div>
+        <span class="card-tilt"><span class="card-inner">
+          <span class="card-cover-wrap">
+            ${game.coverUrl ? `<img class="card-cover" src="${esc(game.coverUrl)}" alt="" loading="lazy" decoding="async" draggable="false"/>` : noArtHTML(title)}
+            <span class="card-reveal" aria-hidden="true"><span class="card-reveal-cta">View entry ›</span></span>
             ${ratingBadge}${metaBadge}${reviewDot}${playingDot}
-          </div>
-          <div class="card-body">
-            <div class="card-num">//${String(game.number||index+1).padStart(3,'0')}</div>
-            <div class="card-name">${game.title}</div>
-            <div class="card-foot">
-              <span class="card-genre">${(game.genre||'—').split('·')[0].trim().toUpperCase()}</span>
-              ${hltb}
-            </div>
-          </div>
-        </div>
-        <div class="card-floor-glow"></div>
-      `;
+          </span>
+          <span class="card-body">
+            <span class="card-num">//${num}</span>
+            <span class="card-name">${esc(title)}</span>
+            <span class="card-foot"><span class="card-genre">${esc(genre.toUpperCase())}</span>${hltb}</span>
+          </span>
+        </span></span>
+        <span class="card-floor-glow" aria-hidden="true"></span>`;
 
-      const inner    = card.querySelector('.card-inner');
-      const spotlight = card.querySelector('.card-spotlight');
-      const floorGlow = card.querySelector('.card-floor-glow');
-      let rafId;
-
-      card.addEventListener('mouseenter', () => { playHover(); if (floorGlow) floorGlow.style.opacity='1'; });
-
-      card.addEventListener('mousemove', e => {
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
-          const r   = card.getBoundingClientRect();
-          const x   = e.clientX - r.left;
-          const y   = e.clientY - r.top;
-          const cx  = (x - r.width/2)  / (r.width/2);
-          const cy  = (y - r.height/2) / (r.height/2);
-
-          // 3D tilt
-          inner.style.transform = `perspective(700px) rotateY(${cx*10}deg) rotateX(${-cy*6}deg) translateY(-20px) scale(1.06)`;
-          inner.style.boxShadow = `${-cx*8}px ${-cy*4}px 40px rgba(224,31,31,0.25), 0 20px 60px rgba(0,0,0,0.8), 0 0 0 1px #e01f1f`;
-
-          // Spotlight
-          spotlight.style.background = `radial-gradient(circle 120px at ${x}px ${y}px, rgba(224,31,31,0.3) 0%, transparent 70%)`;
+      // gentle physical tilt toward the pointer (mouse only)
+      const inner = card.querySelector('.card-inner');
+      let tiltRaf = 0;
+      card.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') playHover(); });
+      card.addEventListener('pointermove', e => {
+        if (e.pointerType !== 'mouse' || reduced() || card.dataset.leaving) return;
+        cancelAnimationFrame(tiltRaf);
+        tiltRaf = requestAnimationFrame(() => {
+          const r = card.getBoundingClientRect();
+          const cx = ((e.clientX - r.left) / r.width - 0.5) * 2, cy = ((e.clientY - r.top) / r.height - 0.5) * 2;
+          inner.style.setProperty('--ryh', (cx * 5).toFixed(2) + 'deg');
+          inner.style.setProperty('--rx', (-cy * 4).toFixed(2) + 'deg');
         });
       });
-
-      card.addEventListener('mouseleave', () => {
-        if (rafId) cancelAnimationFrame(rafId);
-        inner.style.transform = '';
-        inner.style.boxShadow = '';
-        spotlight.style.background = 'none';
-        if (floorGlow) floorGlow.style.opacity='0';
+      card.addEventListener('pointerleave', () => { cancelAnimationFrame(tiltRaf); inner.style.removeProperty('--ryh'); inner.style.removeProperty('--rx'); });
+      card.addEventListener('click', () => {
+        const g = findGame(card.dataset.id);
+        if (g) { openModal(g, card); playClick(); }
       });
-
-      card.addEventListener('click', () => { openModal(game); playClick(); });
       return card;
     }
 
+    const metacriticText = s => s >= 75 ? '#7fd07f' : s >= 60 ? '#e0c341' : '#ff6b6b';
     function metacriticColor(s) {
       if (s >= 90) return '#2d6e2d';
       if (s >= 75) return '#4a7a2a';
@@ -836,266 +1119,502 @@
       return '#7a1515';
     }
 
+    // artwork: fade in when decoded, fall back to the archive placeholder when missing
+    document.addEventListener('load', e => { if (e.target.classList?.contains('card-cover')) e.target.classList.add('is-loaded'); }, true);
+    document.addEventListener('error', e => {
+      const t = e.target;
+      if (!(t instanceof HTMLImageElement)) return;
+      if (t.classList.contains('card-cover')) {
+        const name = t.closest('.shelf-card,.grid-card')?.querySelector('.card-name')?.textContent || '';
+        t.insertAdjacentHTML('afterend', noArtHTML(name)); t.remove();
+      } else if (t === modalCover && t.getAttribute('src')) {
+        showCoverPlaceholder(modalTitle.textContent);
+      } else if (t.classList.contains('igdb-thumb')) {
+        const ph = document.createElement('div'); ph.className = 'igdb-thumb-ph'; t.replaceWith(ph);
+      }
+    }, true);
+
     // ── CONVEX SHELF ─────────────────────────
+    // Card centres only change on render/resize, so they're measured once there;
+    // the scroll handler then only writes transforms (no layout reads per card).
+    let shelfCards = [], cardCenters = [], thumbTravel = 0, thumbWidth = 70;
+    function measureShelf() {
+      shelfCards = [...shelfEl.querySelectorAll('.shelf-card:not([data-leaving])')];
+      cardCenters = shelfCards.map(c => c.offsetLeft + c.offsetWidth / 2);
+      const track = thumbEl.parentElement;
+      const ratio = shelfEl.scrollWidth > 0 ? shelfEl.clientWidth / shelfEl.scrollWidth : 1;
+      thumbWidth = Math.max(40, Math.round(track.clientWidth * Math.min(1, ratio)));
+      thumbEl.style.width = thumbWidth + 'px';
+      thumbTravel = track.clientWidth - thumbWidth;
+      applyConvex(); updateScrollbar();
+    }
     function applyConvex() {
-      const cards  = shelfEl.querySelectorAll('.shelf-card');
-      const center = shelfEl.scrollLeft + shelfEl.clientWidth / 2;
-      const halfW  = shelfEl.clientWidth * 0.5;
-      cards.forEach(card => {
-        const cc     = card.offsetLeft + card.offsetWidth / 2;
-        const signedDist = center - cc; // negative = card is right of center, positive = left of center
-        const dist   = Math.abs(signedDist);
-        const norm   = Math.min(dist / halfW, 1);
-        const ty     = norm * norm * 26;
-        const sc     = 1 - norm * 0.09;
-        // curved-carousel tilt: cards angle toward the viewer based on how far
-        // they sit from center, like they're arranged along a convex shelf
-        const rotY   = (signedDist / halfW) * -12 * (1 - norm * 0.3);
-        if (!card.matches(':hover')) {
-          card.querySelector('.card-inner').style.transform = `perspective(1000px) rotateY(${rotY}deg) translateY(${ty}px) scale(${sc})`;
-        }
-      });
+      if (reduced()) { shelfCards.forEach(c => { const t = c.firstElementChild; if (t) t.style.transform = ''; }); return; }
+      const cw = shelfEl.clientWidth, center = shelfEl.scrollLeft + cw / 2, halfW = cw * 0.5;
+      for (let i = 0; i < shelfCards.length; i++) {
+        const signedDist = center - cardCenters[i];
+        const dist = Math.abs(signedDist);
+        if (dist > halfW + 320) continue; // off-screen: leave it alone
+        const norm = Math.min(dist / halfW, 1);
+        const ty = norm * norm * 22;
+        const sc = 1 - norm * 0.08;
+        const rotY = (signedDist / halfW) * -10 * (1 - norm * 0.3);
+        shelfCards[i].firstElementChild.style.transform = `perspective(1000px) rotateY(${rotY.toFixed(2)}deg) translateY(${ty.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+      }
     }
-
-    // ── SCROLLBAR ────────────────────────────
     function updateScrollbar() {
-      const track = document.querySelector('.scrollbar-track');
-      if (!track) return;
-      const pct    = shelfEl.scrollLeft / Math.max(1, shelfEl.scrollWidth - shelfEl.clientWidth);
-      const trackW = track.clientWidth;
-      const thumbW = thumbEl.clientWidth;
-      thumbEl.style.transform = `translateX(${pct*(trackW-thumbW)}px)`;
+      const max = shelfEl.scrollWidth - shelfEl.clientWidth;
+      const pct = max > 0 ? shelfEl.scrollLeft / max : 0;
+      thumbEl.style.transform = `translateX(${(pct * thumbTravel).toFixed(1)}px)`;
     }
-
+    let scrollQueued = false;
     shelfEl.addEventListener('scroll', () => {
-      requestAnimationFrame(() => { applyConvex(); updateScrollbar(); updateFrameFromScroll(); });
+      if (scrollQueued) return;
+      scrollQueued = true;
+      requestAnimationFrame(() => { scrollQueued = false; applyConvex(); updateScrollbar(); updateFrameFromScroll(); });
+    }, { passive: true });
+    gridWrapEl.addEventListener('scroll', updateFrameFromScroll, { passive: true });
+
+    let resizeQueued = false;
+    window.addEventListener('resize', () => {
+      if (resizeQueued) return;
+      resizeQueued = true;
+      requestAnimationFrame(() => { resizeQueued = false; resizeFrameCanvas(); sizeFxCanvases(); measureShelf(); positionTabIndicator(true); });
     });
-    window.addEventListener('resize', () => { requestAnimationFrame(applyConvex); });
+    resizeFrameCanvas(); sizeFxCanvases();
 
     // ── SHELF SCROLL INPUT ────────────────────
-    // Convert vertical mouse-wheel scrolling into horizontal shelf movement —
-    // without this, a normal mouse (vertical wheel only) cannot scroll the
-    // shelf at all, since it only has horizontal content.
-    shelfEl.addEventListener('wheel', e => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault();
-        shelfEl.scrollLeft += e.deltaY;
-      }
+    // A normal mouse wheel scrolls the shelf (and scrubs the film) from anywhere
+    // on the page, since the page itself never scrolls vertically.
+    window.addEventListener('wheel', e => {
+      if (gridMode || overlayStack.length || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      if (e.target.closest?.('.filter-pills, select, textarea, .grid-wrap')) return;
+      e.preventDefault();
+      shelfEl.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 16 : 1);
     }, { passive: false });
 
-    // Click-and-drag scrolling for mouse users
-    let isDragging = false, dragStartX = 0, dragScrollStart = 0, dragMoved = false;
-    shelfEl.addEventListener('mousedown', e => {
-      if (e.target.closest('.card-inner')) return;
-      isDragging = true;
-      dragMoved = false;
-      dragStartX = e.pageX;
-      dragScrollStart = shelfEl.scrollLeft;
-      shelfEl.style.cursor = 'grabbing';
-      e.preventDefault();
+    // Click-and-drag scrolling for mouse users — works from on top of cards too;
+    // a drag never turns into an accidental click.
+    let drag = null, suppressClick = false;
+    shelfEl.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      drag = { x: e.clientX, sl: shelfEl.scrollLeft, moved: false };
     });
-    document.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-      const delta = e.pageX - dragStartX;
-      // require a small real movement before engaging — filters out accidental
-      // micro-drags, and means a stray leftover isDragging=true can't silently
-      // hijack scroll position from an otherwise-stationary mouse
-      if (!dragMoved && Math.abs(delta) < 4) return;
-      dragMoved = true;
-      shelfEl.scrollLeft = dragScrollStart - delta;
+    window.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const delta = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(delta) < 5) return;
+      if (!drag.moved) { drag.moved = true; shelfEl.classList.add('is-dragging'); }
+      shelfEl.scrollLeft = drag.sl - delta;
     });
     function endDrag() {
-      isDragging = false;
-      dragMoved = false;
-      shelfEl.style.cursor = 'grab';
+      if (!drag) return;
+      if (drag.moved) { suppressClick = true; setTimeout(() => suppressClick = false, 0); shelfEl.classList.remove('is-dragging'); }
+      drag = null;
     }
-    document.addEventListener('mouseup', endDrag);
-    // Safety nets: anything that could cause mouseup to never fire must also
-    // reset drag state, otherwise isDragging gets stuck true forever and every
-    // future mousemove on the page (even unrelated to scrolling) will forcibly
-    // override scrollLeft using stale coordinates — this was very likely the
-    // real cause of the shelf jumping backward on its own.
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
     window.addEventListener('blur', endDrag);
-    document.addEventListener('mouseleave', endDrag);
     document.addEventListener('visibilitychange', () => { if (document.hidden) endDrag(); });
+    shelfEl.addEventListener('click', e => { if (suppressClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+    // Arrow keys walk the shelf / grid
+    function onCardKeys(e) {
+      const card = e.target.closest('.shelf-card,.grid-card');
+      if (!card) return;
+      const list = [...card.parentElement.children].filter(n => !n.dataset.leaving && !n.classList.contains('is-ghost'));
+      const i = list.indexOf(card);
+      const next = { ArrowRight: list[i + 1], ArrowLeft: list[i - 1], Home: list[0], End: list.at(-1) }[e.key];
+      if (!next) return;
+      e.preventDefault();
+      next.focus({ preventScroll: true });
+      next.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' });
+    }
+    shelfEl.addEventListener('keydown', onCardKeys);
+    gridEl.addEventListener('keydown', onCardKeys);
 
     // ── SEARCH + SORT ─────────────────────────
-    searchEl.addEventListener('input', e => { searchQuery=e.target.value.trim(); renderCurrentView(); });
-    sortEl.addEventListener('change',  e => { activeSort=e.target.value; renderCurrentView(); });
+    let searchTimer;
+    function applySearch(value) {
+      searchQuery = value.trim();
+      searchWrap.classList.toggle('has-query', !!searchQuery);
+      if (!searchQuery) searchCount.textContent = '';
+      renderCurrentView('update');
+    }
+    function clearSearch() { searchEl.value = ''; applySearch(''); }
+    searchEl.addEventListener('input', e => { clearTimeout(searchTimer); searchTimer = setTimeout(() => applySearch(e.target.value), 70); });
+    searchEl.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.stopPropagation(); if (searchEl.value) clearSearch(); else searchEl.blur(); }
+      if (e.key === 'Enter' || e.key === 'ArrowDown') {
+        const first = (gridMode ? gridEl : shelfEl).querySelector('.shelf-card:not([data-leaving]),.grid-card:not([data-leaving])');
+        if (first) { e.preventDefault(); first.focus({ preventScroll: true }); first.scrollIntoView({ inline: 'nearest', block: 'nearest' }); }
+      }
+    });
+    $('search-clear').addEventListener('click', () => { clearSearch(); searchEl.focus(); });
+    sortEl.addEventListener('change', e => { activeSort = e.target.value; renderCurrentView('update'); });
+    document.addEventListener('keydown', e => {
+      if (e.key !== '/' || overlayStack.length || e.metaKey || e.ctrlKey) return;
+      if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+      e.preventDefault(); searchEl.focus(); searchEl.select();
+    });
 
     // ── MODAL ────────────────────────────────
-    function openModal(game) {
-      currentId = game.id; currentRating = game.rating||0;
+    let modalSourceId = null;
+    const RATING_WORDS = ['Unrated', 'Pain', 'Rough', 'Not for me', 'Meh', 'Fine', 'Good', 'Really good', 'Great', 'Loved it', 'All-timer'];
+
+    function showCoverPlaceholder(title) {
+      modalCover.style.display = 'none';
+      modalCoverPh.style.display = 'flex';
+      $('modal-cover-ph-title').textContent = title || '';
+    }
+
+    // Shared-element flight: a copy of the cover travels between card and modal.
+    function flyCover(src, from, to, duration) {
+      const g = document.createElement('img');
+      g.className = 'cover-ghost'; g.alt = ''; g.src = src;
+      Object.assign(g.style, { left: to.left + 'px', top: to.top + 'px', width: to.width + 'px', height: to.height + 'px' });
+      document.body.appendChild(g);
+      const a = g.animate([
+        { transform: `translate(${from.left - to.left}px,${from.top - to.top}px) scale(${from.width / to.width},${from.height / to.height})` },
+        { transform: 'none' }
+      ], { duration, easing: 'cubic-bezier(0.2,0.9,0.25,1)' });
+      return a.finished.then(() => g, () => g);
+    }
+    const inViewport = r => r.width > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+
+    function openModal(game, sourceEl) {
+      currentId = game.id; currentRating = game.rating || 0; modalSourceId = game.id;
       const isCompleted = activeTab === 'completed';
+      cancelDelete();
 
-      if (game.coverUrl) { modalCover.src=game.coverUrl; modalCover.style.display='block'; modalCoverPh.style.display='none'; }
-      else { modalCover.style.display='none'; modalCoverPh.style.display='flex'; }
+      if (game.coverUrl) { modalCover.src = game.coverUrl; modalCover.alt = `${game.title} cover`; modalCover.style.display = 'block'; modalCoverPh.style.display = 'none'; }
+      else { modalCover.removeAttribute('src'); showCoverPlaceholder(game.title); }
 
-      modalNumber.textContent = `//${String(game.number||'').padStart(3,'0')}`;
+      modalNumber.textContent = `//${String(game.number || '').padStart(3,'0')}`;
       modalTitle.textContent  = game.title;
-      modalGenre.textContent  = (game.genre||'UNKNOWN').toUpperCase();
-      modalDesc.textContent   = game.description||'';
+      modalGenre.textContent  = (game.genre || 'Unknown genre').toUpperCase();
+      modalDesc.textContent   = game.description || '';
 
       modalMeta.innerHTML = `
-        ${game.metacritic ? `<div class="meta-row"><span class="meta-label">METACRITIC</span><span class="meta-val" style="color:${metacriticColor(game.metacritic)};font-weight:700;">${game.metacritic}</span></div>` : ''}
-        <div class="meta-row"><span class="meta-label">YEAR</span><span class="meta-val">${game.year||'—'}</span></div>
-        <div class="meta-row"><span class="meta-label">DEV</span><span class="meta-val">${game.developer||'—'}</span></div>
-        <div class="meta-row"><span class="meta-label">PLATFORM</span><span class="meta-val"><input type="text" class="platform-input" id="modal-platform-input" value="${game.platform||''}" placeholder="PS5, PC..."/></span></div>
-        <div class="meta-row"><span class="meta-label">HLTB</span><span class="meta-val">${game.hltb||'—'}</span></div>
-        <div class="meta-row"><span class="meta-label">HOURS PLAYED</span><span class="meta-val"><input type="number" min="0" step="0.5" class="hours-input" id="modal-hours-input" value="${game.hoursPlayed!=null?game.hoursPlayed:''}" placeholder="0"/></span></div>
-        <div class="meta-row"><span class="meta-label">DATE COMPLETED</span><span class="meta-val"><input type="date" class="date-input" id="modal-date-input" value="${game.dateCompleted||''}"/></span></div>
-        <div class="meta-row meta-row-playing"><span class="meta-label">CURRENTLY PLAYING</span><span class="meta-val"><label class="playing-toggle"><input type="checkbox" id="modal-playing-check" ${game.status==='Playing'?'checked':''}/><span class="playing-toggle-dot"></span></label></span></div>
+        ${game.metacritic ? `<div class="meta-row"><span class="meta-label">Metacritic</span><span class="meta-val" style="color:${metacriticText(game.metacritic)};font-weight:700;">${esc(game.metacritic)}</span></div>` : ''}
+        <div class="meta-row"><span class="meta-label">Year</span><span class="meta-val">${esc(game.year || '—')}</span></div>
+        <div class="meta-row"><span class="meta-label">Dev</span><span class="meta-val">${esc(game.developer || '—')}</span></div>
+        <div class="meta-row"><label class="meta-label" for="modal-platform-input">Platform</label><span class="meta-val"><input type="text" class="meta-input platform-input" id="modal-platform-input" value="${esc(game.platform || '')}" placeholder="PS5, PC…" autocomplete="off"/></span></div>
+        <div class="meta-row"><span class="meta-label">HLTB</span><span class="meta-val">${esc(game.hltb || '—')}</span></div>
+        <div class="meta-row"><label class="meta-label" for="modal-hours-input">Hours played</label><span class="meta-val"><input type="number" min="0" step="0.5" inputmode="decimal" class="meta-input hours-input" id="modal-hours-input" value="${game.hoursPlayed != null ? esc(game.hoursPlayed) : ''}" placeholder="0"/></span></div>
+        <div class="meta-row"><label class="meta-label" for="modal-date-input">Completed</label><span class="meta-val"><input type="date" class="meta-input date-input" id="modal-date-input" value="${esc(game.dateCompleted || '')}"/></span></div>
+        <div class="meta-row meta-row-playing"><label class="meta-label" for="modal-playing-check">Playing now</label><span class="meta-val"><span class="playing-toggle"><input type="checkbox" role="switch" id="modal-playing-check" ${game.status === 'Playing' ? 'checked' : ''}/><span class="playing-toggle-dot" aria-hidden="true"></span></span></span></div>
       `;
 
-      const platformInput = document.getElementById('modal-platform-input');
-      platformInput.addEventListener('change', async () => {
-        if (!currentId) return;
-        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
-        await updateDoc(doc(db,col,currentId), {platform: platformInput.value});
-        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
-        const g = arr.find(x=>x.id===currentId); if (g) g.platform = platformInput.value;
-        showToast('Platform updated','','🎮'); playClick();
-      });
+      const bindField = (id, field, read, title, icon) => {
+        const input = $(id);
+        input.addEventListener('change', async () => {
+          if (!currentId) return;
+          const id0 = currentId, val = read(input);
+          const ok = await write(() => updateDoc(doc(db, colFor(activeTab), id0), { [field]: val }), `${title.split(' ')[0]} not saved`);
+          if (!ok) return;
+          const g = listFor(activeTab).find(x => x.id === id0); if (g) g[field] = val;
+          const row = input.closest('.meta-row'); row.classList.add('saved'); setTimeout(() => row.classList.remove('saved'), 900);
+          showToast(title, '', icon); playClick();
+        });
+      };
+      bindField('modal-platform-input', 'platform', i => i.value, 'Platform noted', '▣');
+      bindField('modal-date-input', 'dateCompleted', i => i.value, 'Date logged', '◷');
+      bindField('modal-hours-input', 'hoursPlayed', i => i.value === '' ? null : parseFloat(i.value), 'Hours logged', '◷');
 
-      const dateInput = document.getElementById('modal-date-input');
-      dateInput.addEventListener('change', async () => {
-        if (!currentId) return;
-        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
-        await updateDoc(doc(db,col,currentId), {dateCompleted: dateInput.value});
-        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
-        const g = arr.find(x=>x.id===currentId); if (g) g.dateCompleted = dateInput.value;
-        showToast('Date updated','','📅'); playClick();
-      });
-
-      const hoursInput = document.getElementById('modal-hours-input');
-      hoursInput.addEventListener('change', async () => {
-        const val = hoursInput.value === '' ? null : parseFloat(hoursInput.value);
-        if (!currentId) return;
-        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
-        await updateDoc(doc(db,col,currentId), {hoursPlayed: val});
-        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
-        const g = arr.find(x=>x.id===currentId); if (g) g.hoursPlayed = val;
-        showToast('Hours updated','','⏱'); playClick();
-      });
-
-      const playingCheck = document.getElementById('modal-playing-check');
+      const playingCheck = $('modal-playing-check');
       playingCheck.addEventListener('change', async () => {
         if (!currentId) return;
-        const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
-        const newStatus = playingCheck.checked ? 'Playing' : (activeTab==='completed'?'Completed':'To Play');
-        await updateDoc(doc(db,col,currentId), {status: newStatus});
-        const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
-        const g = arr.find(x=>x.id===currentId); if (g) g.status = newStatus;
-        renderCurrentView();
-        showToast(playingCheck.checked ? 'Marked as Playing' : 'Unmarked','','▶'); playClick();
+        const id0 = currentId;
+        const newStatus = playingCheck.checked ? 'Playing' : (activeTab === 'completed' ? 'Completed' : 'To Play');
+        const ok = await write(() => updateDoc(doc(db, colFor(activeTab), id0), {status: newStatus}), 'Status not saved');
+        if (!ok) { playingCheck.checked = !playingCheck.checked; return; }
+        const g = listFor(activeTab).find(x => x.id === id0); if (g) g.status = newStatus;
+        renderCurrentView('update');
+        showToast(playingCheck.checked ? 'Marked as playing' : 'No longer playing', '', '▶'); playClick();
       });
 
       reviewSection.style.display = isCompleted ? 'flex' : 'none';
-      if (isCompleted) { reviewInput.value=game.review||''; commentsInput.value=game.comments||''; setStars(currentRating); saveConfirm.style.opacity='0'; document.getElementById('told-laali-check').checked = !!game.toldLaali; }
+      if (isCompleted) {
+        reviewInput.value = game.review || ''; commentsInput.value = game.comments || '';
+        setStars(currentRating);
+        $('told-laali-check').checked = !!game.toldLaali;
+        resetSaveButton();
+      }
 
-      overlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
+      // choreography: backdrop fades, panel settles, cover flies in from its card
+      detailModal.scrollTop = 0;
+      const cardImg = sourceEl?.querySelector('.card-cover.is-loaded');
+      const fromWrap = cardImg?.closest('.card-cover-wrap');
+      if (!reduced() && cardImg && game.coverUrl && fromWrap) {
+        overlay.classList.add('measuring');
+        const to = modalCoverWrap.getBoundingClientRect();
+        overlay.classList.remove('measuring');
+        void detailModal.offsetWidth;
+        const from = fromWrap.getBoundingClientRect();
+        sourceEl.classList.add('is-source');
+        modalCoverWrap.classList.add('is-flying');
+        flyCover(cardImg.currentSrc || cardImg.src, from, to, 480).then(async g => {
+          await Promise.race([modalCover.decode?.().catch(() => {}), new Promise(r => setTimeout(r, 250))]);
+          modalCoverWrap.classList.remove('is-flying');
+          g.remove();
+        });
+      }
+      openOverlay(overlay, { focus: modalClose, onEscape: () => modalFoot.classList.contains('is-confirming') ? (cancelDelete(), $('btn-delete-game').focus()) : closeModal() });
     }
 
-    function closeModal() { overlay.classList.remove('active'); document.body.style.overflow=''; currentId=null; }
+    function closeModal() {
+      if (!overlay.classList.contains('active')) return;
+      const id = modalSourceId;
+      const container = gridMode ? gridEl : shelfEl;
+      const card = id ? container.querySelector(`[data-id="${CSS.escape(id)}"]:not([data-leaving])`) : null;
+      const cardImg = card?.querySelector('.card-cover.is-loaded');
+      const cardWrap = cardImg?.closest('.card-cover-wrap');
+      let to = cardWrap?.getBoundingClientRect();
+      const bounds = (gridMode ? gridWrapEl : shelfEl).getBoundingClientRect();
+      const visible = to && inViewport(to) && to.left >= bounds.left - 4 && to.right <= bounds.right + 4;
+      const clearSources = () => document.querySelectorAll('.is-source').forEach(c => c.classList.remove('is-source'));
+      if (!reduced() && visible && modalCover.style.display !== 'none' && modalCover.complete && modalCover.naturalWidth > 0) {
+        const from = modalCoverWrap.getBoundingClientRect();
+        clearSources(); card.classList.add('is-source');
+        modalCoverWrap.classList.add('is-flying');
+        flyCover(modalCover.currentSrc || modalCover.src, from, to, 420).then(g => {
+          card.classList.remove('is-source'); g.remove();
+          modalCoverWrap.classList.remove('is-flying');
+        });
+      } else {
+        clearSources();
+        modalCoverWrap.classList.remove('is-flying');
+      }
+      document.querySelectorAll('.cover-ghost').forEach(g => { if (!g.getAnimations().length) g.remove(); });
+      closeOverlay(overlay, { restoreFocus: !!card });
+      if (card && !card.matches(':focus')) card.focus({ preventScroll: true });
+      currentId = null; modalSourceId = null;
+    }
     modalClose.addEventListener('click', () => { closeModal(); playClick(); });
-    overlay.addEventListener('click', e => { if(e.target===overlay) closeModal(); });
+    closeOnBackdrop(overlay, closeModal);
 
     // ── EDIT TITLE ───────────────────────────
+    const editTitleOverlay = $('edit-title-overlay'), editTitleInput = $('edit-title-input'), editTitleError = $('edit-title-error');
     editTitleBtn.addEventListener('click', () => {
-      document.getElementById('edit-title-input').value = modalTitle.textContent;
-      document.getElementById('edit-title-overlay').classList.add('active');
-      setTimeout(() => document.getElementById('edit-title-input').focus(), 100);
+      editTitleInput.value = modalTitle.textContent; editTitleError.textContent = ''; editTitleInput.classList.remove('is-invalid');
+      openOverlay(editTitleOverlay, { focus: editTitleInput });
+      requestAnimationFrame(() => editTitleInput.select());
       playClick();
     });
-    document.getElementById('edit-title-close').addEventListener('click', () => document.getElementById('edit-title-overlay').classList.remove('active'));
-    document.getElementById('edit-title-overlay').addEventListener('click', e => { if(e.target===document.getElementById('edit-title-overlay')) document.getElementById('edit-title-overlay').classList.remove('active'); });
-    document.getElementById('btn-save-title').addEventListener('click', async () => {
-      const t = document.getElementById('edit-title-input').value.trim();
-      if (!t || !currentId) return;
-      const col = activeTab==='completed'?'games':'backlog';
-      await updateDoc(doc(db,col,currentId),{title:t});
-      const arr = activeTab==='completed'?completedGames:backlogGames;
-      const g = arr.find(x=>x.id===currentId); if(g) g.title=t;
+    $('edit-title-close').addEventListener('click', () => closeOverlay(editTitleOverlay));
+    closeOnBackdrop(editTitleOverlay, () => closeOverlay(editTitleOverlay));
+    async function saveTitle() {
+      const t = editTitleInput.value.trim();
+      if (!t) { editTitleError.textContent = 'A game needs a name.'; editTitleInput.classList.add('is-invalid'); editTitleInput.focus(); return; }
+      if (!currentId) return;
+      const id0 = currentId, btn = $('btn-save-title');
+      btn.classList.add('is-busy');
+      const ok = await write(() => updateDoc(doc(db, colFor(activeTab), id0), {title: t}), 'Title not saved');
+      btn.classList.remove('is-busy');
+      if (!ok) return;
+      const g = listFor(activeTab).find(x => x.id === id0); if (g) g.title = t;
       modalTitle.textContent = t;
-      document.getElementById('edit-title-overlay').classList.remove('active');
-      renderCurrentView(); showToast('Title updated','','✎'); playClick();
-    });
+      closeOverlay(editTitleOverlay);
+      renderCurrentView('update'); showToast('Title updated', '', '✎'); playClick();
+    }
+    $('btn-save-title').addEventListener('click', saveTitle);
+    editTitleInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveTitle(); });
+    editTitleInput.addEventListener('input', () => { editTitleError.textContent = ''; editTitleInput.classList.remove('is-invalid'); });
 
     // ── STARS ────────────────────────────────
-    function setStars(val) { stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.val)<=val)); }
+    const starRow = document.querySelector('.star-row');
+    function setStars(val, preview = 0) {
+      stars.forEach(s => {
+        const v = +s.dataset.val;
+        s.classList.toggle('active', v <= val);
+        s.classList.toggle('preview', preview > 0 && v <= preview);
+        s.setAttribute('aria-checked', String(v === val));
+        s.tabIndex = (val ? v === val : v === 1) ? 0 : -1;
+      });
+      const shown = preview || val;
+      $('star-readout').classList.toggle('is-empty', !shown);
+      $('star-score').innerHTML = `${shown || '–'}<small>/10</small>`;
+      $('star-word').textContent = RATING_WORDS[shown] || '';
+    }
+    function rate(val, star) {
+      currentRating = val;
+      setStars(currentRating);
+      if (star && !reduced()) { star.classList.remove('pop'); void star.offsetWidth; star.classList.add('pop'); }
+      markReviewDirty(); playClick();
+    }
     stars.forEach(s => {
-      s.addEventListener('click', () => { currentRating=parseInt(s.dataset.val); setStars(currentRating); playClick(); });
-      s.addEventListener('mouseover', () => setStars(parseInt(s.dataset.val)));
-      s.addEventListener('mouseout', () => setStars(currentRating));
+      // clicking your current score again clears it
+      s.addEventListener('click', () => rate(+s.dataset.val === currentRating ? 0 : +s.dataset.val, s));
+      s.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') setStars(currentRating, +s.dataset.val); });
+    });
+    starRow.addEventListener('pointerleave', () => setStars(currentRating));
+    starRow.addEventListener('keydown', e => {
+      const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+      let v = d ? Math.min(10, Math.max(1, (currentRating || 0) + d)) : e.key === 'Home' ? 1 : e.key === 'End' ? 10 : 0;
+      if (!v) return;
+      e.preventDefault();
+      rate(v, stars[v - 1]);
+      stars[v - 1].focus();
     });
 
     // ── SAVE REVIEW ──────────────────────────
+    let saveResetTimer;
+    function resetSaveButton() { clearTimeout(saveResetTimer); btnSave.textContent = 'Save review'; btnSave.classList.remove('is-done', 'is-busy'); }
+    function markReviewDirty() { if (btnSave.classList.contains('is-done')) resetSaveButton(); }
+    [reviewInput, commentsInput, $('told-laali-check')].forEach(el => el.addEventListener('input', markReviewDirty));
     btnSave.addEventListener('click', async () => {
       if (!currentId) return;
-      const toldLaali = document.getElementById('told-laali-check').checked;
-      await updateDoc(doc(db,'games',currentId),{review:reviewInput.value,comments:commentsInput.value,rating:currentRating,toldLaali});
-      const g = completedGames.find(x=>x.id===currentId);
-      if(g) { g.review=reviewInput.value; g.comments=commentsInput.value; g.rating=currentRating; g.toldLaali=toldLaali; }
-      saveConfirm.style.opacity='1';
-      setTimeout(()=>saveConfirm.style.opacity='0',2000);
-      updateCounts(); renderCurrentView();
-      showToast('Review saved','Achievement unlocked: Critic','★'); playClick();
+      const id0 = currentId;
+      const toldLaali = $('told-laali-check').checked;
+      const data = { review: reviewInput.value, comments: commentsInput.value, rating: currentRating, toldLaali };
+      btnSave.classList.add('is-busy'); btnSave.textContent = 'Saving…';
+      const ok = await write(() => updateDoc(doc(db,'games',id0), data), 'Review not saved');
+      btnSave.classList.remove('is-busy');
+      if (!ok) { btnSave.textContent = 'Save review'; return; }
+      const g = completedGames.find(x => x.id === id0);
+      if (g) Object.assign(g, data);
+      btnSave.textContent = 'Saved ✓'; btnSave.classList.add('is-done');
+      clearTimeout(saveResetTimer); saveResetTimer = setTimeout(resetSaveButton, 2200);
+      updateCounts(); renderCurrentView('update');
+      showToast('Review saved', 'Achievement unlocked: Critic', '★'); playClick();
     });
 
-    document.getElementById('btn-delete-game').addEventListener('click', async () => {
+    // ── DELETE (inline confirmation, no browser dialog) ──
+    function cancelDelete() { modalFoot.classList.remove('is-confirming'); }
+    $('btn-delete-game').addEventListener('click', () => {
+      const g = findGame(currentId);
+      $('delete-confirm-text').textContent = `Delete “${g ? g.title : 'this game'}” for good?`;
+      modalFoot.classList.add('is-confirming');
+      $('btn-delete-no').focus();
+      playClick();
+    });
+    $('btn-delete-no').addEventListener('click', () => { cancelDelete(); $('btn-delete-game').focus(); });
+    $('btn-delete-yes').addEventListener('click', async () => {
       if (!currentId) return;
-      const col = activeTab==='completed' ? 'games' : activeTab==='backlog' ? 'backlog' : 'ours';
-      const arr = activeTab==='completed' ? completedGames : activeTab==='backlog' ? backlogGames : oursGames;
-      const g   = arr.find(x=>x.id===currentId);
+      const id0 = currentId, tab = activeTab;
+      const arr = listFor(tab);
+      const g   = arr.find(x => x.id === id0);
       const title = g ? g.title : 'this game';
-      if (!confirm(`Delete "${title}" from the archive? This can't be undone.`)) return;
-      await deleteDoc(doc(db,col,currentId));
-      const idx = arr.findIndex(x=>x.id===currentId);
-      if (idx > -1) arr.splice(idx,1);
+      const ok = await write(() => deleteDoc(doc(db, colFor(tab), id0)), 'Not deleted');
+      if (!ok) return;
+      const idx = arr.findIndex(x => x.id === id0);
+      if (idx > -1) arr.splice(idx, 1);
+      modalSourceId = null; // nothing to fly back to
       closeModal();
-      updateCounts(); buildGenreBar(); buildPills(); renderCurrentView();
-      showToast(title+' removed','','🗑'); playClick();
+      updateCounts(); buildGenreBar(); buildPills(); renderCurrentView('update');
+      showToast(title + ' removed', 'Gone from the archive', '✕'); playClick();
     });
 
     // ── ADD GAME ─────────────────────────────
-    document.getElementById('btn-add-game').addEventListener('click', () => { document.getElementById('add-overlay').classList.add('active'); document.body.style.overflow='hidden'; playClick(); });
-    function closeAdd() { document.getElementById('add-overlay').classList.remove('active'); document.body.style.overflow=''; document.getElementById('add-name').value=''; document.getElementById('igdb-results').innerHTML=''; document.getElementById('manual-add').style.display='none'; }
-    document.getElementById('add-close').addEventListener('click', closeAdd);
-    document.getElementById('add-overlay').addEventListener('click', e => { if(e.target===document.getElementById('add-overlay')) closeAdd(); });
-    document.querySelectorAll('.add-tab').forEach(btn => { btn.addEventListener('click',()=>{ document.querySelectorAll('.add-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); addTab=btn.dataset.addtab; }); });
+    const addOverlay = $('add-overlay'), addName = $('add-name'), igdbResults = $('igdb-results'), addFoot = $('add-foot'), manualAdd = $('manual-add');
+    let adding = false;
+    function setAddTab(t) {
+      addTab = t;
+      document.querySelectorAll('.add-tab').forEach(b => { const on = b.dataset.addtab === t; b.classList.toggle('active', on); b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+    }
+    function resetAdd() {
+      addName.value = ''; igdbResults.innerHTML = ''; addFoot.innerHTML = ''; manualAdd.style.display = 'none';
+      ['add-year', 'add-genre', 'add-dev'].forEach(id => $(id).value = '');
+      $('manual-error').textContent = ''; adding = false;
+    }
+    function openAdd(prefill = '') {
+      resetAdd(); setAddTab(activeTab);
+      openOverlay(addOverlay, { focus: addName });
+      if (prefill) { addName.value = prefill; searchIGDB(prefill); }
+      playClick();
+    }
+    $('btn-add-game').addEventListener('click', () => openAdd());
+    $('add-close').addEventListener('click', () => closeOverlay(addOverlay));
+    closeOnBackdrop(addOverlay, () => closeOverlay(addOverlay));
+    document.querySelectorAll('.add-tab').forEach(btn => btn.addEventListener('click', e => {
+      setAddTab(btn.dataset.addtab); playClick();
+      if (e.detail) addName.focus(); // pointer pick: hand focus straight back to the title field
+    }));
+    document.querySelector('.add-tabs').addEventListener('keydown', e => {
+      const i = tabOrder.indexOf(addTab), d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!d) return;
+      e.preventDefault();
+      const t = tabOrder[(i + d + 3) % 3]; setAddTab(t);
+      document.querySelector(`.add-tab[data-addtab="${t}"]`).focus();
+    });
 
-    let igdbTimer;
-    document.getElementById('add-name').addEventListener('input', () => {
+    function showManual() {
+      manualAdd.style.display = 'block';
+      $('manual-sub').textContent = addName.value.trim() ? `Filing “${addName.value.trim()}” by hand.` : 'Type the title in the box above, then fill in what you know.';
+      addFoot.innerHTML = '';
+      $('add-genre').focus();
+    }
+    function footLink(text) {
+      addFoot.innerHTML = `${text} <button type="button" class="igdb-link" id="ml">Add it by hand</button>`;
+      $('ml').addEventListener('click', showManual);
+    }
+
+    let igdbTimer, igdbToken = 0;
+    addName.addEventListener('input', () => {
       clearTimeout(igdbTimer);
-      const q = document.getElementById('add-name').value.trim();
-      if (q.length<2) { document.getElementById('igdb-results').innerHTML=''; return; }
-      igdbTimer = setTimeout(()=>searchIGDB(q), 400);
+      const q = addName.value.trim();
+      if (manualAdd.style.display !== 'none') $('manual-sub').textContent = q ? `Filing “${q}” by hand.` : 'Type the title in the box above, then fill in what you know.';
+      if (q.length < 2) { igdbToken++; igdbResults.innerHTML = ''; addFoot.innerHTML = ''; return; }
+      igdbTimer = setTimeout(() => searchIGDB(q), 350);
+    });
+    addName.addEventListener('keydown', e => {
+      const rows = igdbResults.querySelectorAll('.igdb-row');
+      if (e.key === 'ArrowDown' && rows.length) { e.preventDefault(); rows[0].focus(); }
+      if (e.key === 'Enter') {
+        if (manualAdd.style.display !== 'none') $('btn-manual-add').click();
+        else if (rows.length) rows[0].click();
+      }
+    });
+    igdbResults.addEventListener('keydown', e => {
+      const rows = [...igdbResults.querySelectorAll('.igdb-row')], i = rows.indexOf(document.activeElement);
+      if (i < 0) return;
+      if (e.key === 'ArrowDown' && rows[i + 1]) { e.preventDefault(); rows[i + 1].focus(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); (rows[i - 1] || addName).focus(); }
     });
 
     async function searchIGDB(q) {
-      document.getElementById('igdb-results').innerHTML='<div class="igdb-loading">SEARCHING...</div>';
+      const token = ++igdbToken;
+      if (!igdbResults.querySelector('.igdb-row')) igdbResults.innerHTML = '<div class="igdb-loading is-busy">Searching IGDB</div>';
+      igdbResults.setAttribute('aria-busy', 'true');
       try {
         const res  = await fetch(`${IGDB}?search=${encodeURIComponent(q)}&_=${Date.now()}`);
         const data = await res.json();
-        if (!data.length) { document.getElementById('igdb-results').innerHTML='<div class="igdb-loading">NO RESULTS. <span class="igdb-link" id="ml">ADD MANUALLY</span></div>'; document.getElementById('ml')?.addEventListener('click',()=>{ document.getElementById('manual-add').style.display='block'; document.getElementById('igdb-results').innerHTML=''; }); return; }
-        document.getElementById('igdb-results').innerHTML='';
-        data.slice(0,30).forEach(g => {
-          const row=document.createElement('div'); row.className='igdb-row';
-          row.innerHTML=`${g.cover?`<img src="https://images.igdb.com/igdb/image/upload/t_cover_small/${g.cover.image_id}.jpg" class="igdb-thumb" alt=""/>`:'<div class="igdb-thumb-ph"></div>'}<div><div class="igdb-name">${g.name}</div><div class="igdb-year">${g.first_release_date?new Date(g.first_release_date*1000).getFullYear():'—'}</div></div>`;
-          row.addEventListener('click',()=>addGame(g));
-          document.getElementById('igdb-results').appendChild(row);
+        if (token !== igdbToken) return; // a newer search is on its way
+        if (!res.ok || !Array.isArray(data)) throw new Error(data?.error || 'bad response');
+        if (!data.length) {
+          igdbResults.innerHTML = `<div class="igdb-loading">Nothing on IGDB for “${esc(q)}”.</div>`;
+          footLink('No luck?');
+          return;
+        }
+        igdbResults.innerHTML = '';
+        data.slice(0,30).forEach((g, i) => {
+          const row = document.createElement('button');
+          row.type = 'button'; row.className = 'igdb-row';
+          row.style.animationDelay = Math.min(i, 6) * 18 + 'ms';
+          row.innerHTML = `${g.cover ? `<img src="https://images.igdb.com/igdb/image/upload/t_cover_small/${esc(g.cover.image_id)}.jpg" class="igdb-thumb" alt="" loading="lazy"/>` : '<div class="igdb-thumb-ph"></div>'}<div class="igdb-text"><div class="igdb-name">${esc(g.name)}</div><div class="igdb-year">${g.first_release_date ? new Date(g.first_release_date*1000).getFullYear() : '—'}</div></div>`;
+          row.addEventListener('click', () => addGame(g, row));
+          igdbResults.appendChild(row);
         });
-      } catch(e) { document.getElementById('igdb-results').innerHTML='<div class="igdb-loading">CONNECTION ERROR.</div>'; }
+        footLink('Can’t find it?');
+      } catch(e) {
+        if (token !== igdbToken) return;
+        igdbResults.innerHTML = '<div class="igdb-loading">Couldn’t reach IGDB.</div>';
+        footLink('Never mind.');
+      } finally {
+        if (token === igdbToken) igdbResults.removeAttribute('aria-busy');
+      }
     }
 
-    function addTabCol(t){ return t==='completed'?'games':t==='backlog'?'backlog':'ours'; }
-    function addTabArr(t){ return t==='completed'?completedGames:t==='backlog'?backlogGames:oursGames; }
-    function addTabStatus(t){ return t==='completed'?'Completed':t==='backlog'?'To Play':'To Play'; }
+    function addTabCol(t){ return colFor(t); }
+    function addTabArr(t){ return listFor(t); }
+    function addTabStatus(t){ return TABS[t].status; }
 
-    async function addGame(igdbGame) {
-      const col = addTabCol(addTab);
-      const arr = addTabArr(addTab);
+    async function addGame(igdbGame, row) {
+      if (adding) return;
+      adding = true;
+      igdbResults.querySelectorAll('.igdb-row').forEach(r => r.disabled = true);
+      const tab = addTab, col = addTabCol(tab), arr = addTabArr(tab);
       const n   = arr.length ? Math.max(...arr.map(x=>x.number||0))+1 : 1;
       const newGame = {
         number:n, title:igdbGame.name,
@@ -1103,27 +1622,59 @@
         genre: igdbGame.genres?.map(g=>g.name).join(' · ')||'',
         developer: igdbGame.involved_companies?.find(c=>c.developer)?.company?.name||'',
         year: igdbGame.first_release_date?new Date(igdbGame.first_release_date*1000).getFullYear():null,
-        description: igdbGame.summary||'', review:'', comments:'', rating:0, metacritic:null, hltb:'', platform:'', hoursPlayed:null, status:addTabStatus(addTab)
+        description: igdbGame.summary||'', review:'', comments:'', rating:0, metacritic:null, hltb:'', platform:'', hoursPlayed:null, status:addTabStatus(tab)
       };
-      const ref = await addDoc(collection(db,col),newGame);
+      let ref;
+      const ok = await write(async () => { ref = await addDoc(collection(db,col),newGame); }, 'Couldn’t add it');
+      adding = false;
+      if (!ok) { igdbResults.querySelectorAll('.igdb-row').forEach(r => r.disabled = false); return; }
       arr.push({id:ref.id,...newGame});
-      closeAdd(); updateCounts(); buildGenreBar(); buildPills(); renderCurrentView();
+      afterAdd(tab, ref.id);
       showToast(newGame.title+' added','New entry unlocked','+'); playClick();
     }
 
-    document.getElementById('btn-manual-add').addEventListener('click', async () => {
-      const title=document.getElementById('add-name').value.trim(); if(!title) return;
-      const col=addTabCol(addTab), arr=addTabArr(addTab);
-      const n=arr.length?Math.max(...arr.map(x=>x.number||0))+1:1;
-      const newGame={number:n,title,year:parseInt(document.getElementById('add-year').value)||null,genre:document.getElementById('add-genre').value.trim(),developer:document.getElementById('add-dev').value.trim(),coverUrl:null,description:'',review:'',comments:'',rating:0,metacritic:null,hltb:'',platform:'',hoursPlayed:null,status:addTabStatus(addTab)};
-      const ref=await addDoc(collection(db,col),newGame); arr.push({id:ref.id,...newGame});
-      closeAdd(); updateCounts(); buildGenreBar(); buildPills(); renderCurrentView();
-      showToast(title+' added','','+'); playClick();
+    $('btn-manual-add').addEventListener('click', async () => {
+      const title = addName.value.trim();
+      if (!title) { $('manual-error').textContent = 'Type the title in the box above first.'; addName.classList.add('is-invalid'); addName.focus(); return; }
+      if (adding) return;
+      adding = true;
+      const tab = addTab, col = addTabCol(tab), arr = addTabArr(tab);
+      const n = arr.length?Math.max(...arr.map(x=>x.number||0))+1:1;
+      const newGame={number:n,title,year:parseInt($('add-year').value)||null,genre:$('add-genre').value.trim(),developer:$('add-dev').value.trim(),coverUrl:null,description:'',review:'',comments:'',rating:0,metacritic:null,hltb:'',platform:'',hoursPlayed:null,status:addTabStatus(tab)};
+      let ref;
+      const ok = await write(async () => { ref = await addDoc(collection(db,col),newGame); }, 'Couldn’t add it');
+      adding = false;
+      if (!ok) return;
+      arr.push({id:ref.id,...newGame});
+      afterAdd(tab, ref.id);
+      showToast(title+' added','Filed by hand','+'); playClick();
     });
+    addName.addEventListener('input', () => { addName.classList.remove('is-invalid'); $('manual-error').textContent = ''; });
+
+    // After adding: land on the right shelf and point at the new entry.
+    function afterAdd(tab, id) {
+      closeOverlay(addOverlay, { restoreFocus: false });
+      updateCounts();
+      const reveal = () => {
+        const container = gridMode ? gridEl : shelfEl;
+        const card = container.querySelector(`[data-id="${CSS.escape(id)}"]`);
+        if (!card) return;
+        card.focus({ preventScroll: true });
+        card.scrollIntoView({ inline: 'center', block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
+        card.classList.add('is-new');
+        setTimeout(() => card.classList.remove('is-new'), 1800);
+      };
+      if (tab !== activeTab) { setTab(tab, { then: () => setTimeout(reveal, 60) }); return; }
+      if (activeFilter !== 'all' || searchQuery || reviewedFilter) { activeFilter = 'all'; setReviewed(false); searchEl.value = ''; searchQuery = ''; searchWrap.classList.remove('has-query'); }
+      buildGenreBar(); buildPills(); renderCurrentView('update');
+      setTimeout(reveal, 60);
+    }
 
     // ── BOOT ─────────────────────────────────
+    positionTabIndicator(true);
+    document.fonts?.ready.then(() => { positionTabIndicator(true); measureShelf(); });
     loadAll();
-
+    loadArchiveName();
   </script>
 </body>
 </html>
