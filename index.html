@@ -20,7 +20,7 @@
   </style>
   <link rel="stylesheet" href="style.css"/>
 </head>
-<body>
+<body class="intro">
 
   <!-- ATMOSPHERE: frame scrubber background + embers -->
   <canvas class="frame-canvas" id="frame-canvas" aria-hidden="true"></canvas>
@@ -29,6 +29,7 @@
   <canvas class="trail-canvas" id="trail-canvas" aria-hidden="true"></canvas>
   <canvas class="ember-canvas" id="ember-canvas" aria-hidden="true"></canvas>
   <div class="fog-layer" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
   <div class="grid-scrim" aria-hidden="true"></div>
 
   <audio id="bg-music" loop preload="none">
@@ -41,23 +42,24 @@
       <label class="search" id="search-wrap">
         <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.3 10.3L15 15" stroke="currentColor" stroke-width="1.6"/></svg>
         <span class="sr-only">Search the archive</span>
-        <input class="search-input" id="search-input" type="search" placeholder="Search the archive" autocomplete="off" spellcheck="false" enterkeyhint="search"/>
+        <input class="search-input" id="search-input" type="search" placeholder="Search the archive" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-keyshortcuts="/"/>
+        <span class="search-ph" id="search-ph" aria-hidden="true"><span class="search-ph-text" id="search-ph-text">Search the archive</span></span>
         <span class="search-count" id="search-count" aria-live="polite"></span>
-        <kbd class="search-kbd" aria-hidden="true">/</kbd>
+        <button class="search-kbd" id="palette-btn" type="button" aria-label="Jump to any game or action" aria-keyshortcuts="Control+K Meta+K" data-tip="Jump anywhere"><kbd id="palette-kbd">Ctrl K</kbd></button>
         <button class="search-clear" id="search-clear" type="button" aria-label="Clear search">✕</button>
       </label>
 
       <div class="tab-group" id="tab-group" role="tablist" aria-label="Archive sections">
-        <button class="tab active" data-tab="completed" role="tab" aria-selected="true" title="Finished and filed">Completed</button>
-        <button class="tab" data-tab="backlog" role="tab" aria-selected="false" title="Waiting their turn">Backlog</button>
-        <button class="tab" data-tab="ours" role="tab" aria-selected="false" title="The ones we play together">Our games <span class="tab-heart" aria-hidden="true">♥</span></button>
+        <button class="tab active" data-tab="completed" role="tab" aria-selected="true" data-tip="Finished and filed" data-kbd="1" aria-keyshortcuts="1">Completed</button>
+        <button class="tab" data-tab="backlog" role="tab" aria-selected="false" data-tip="Waiting their turn" data-kbd="2" aria-keyshortcuts="2">Backlog</button>
+        <button class="tab" data-tab="ours" role="tab" aria-selected="false" data-tip="The ones we play together" data-kbd="3" aria-keyshortcuts="3">Our games <span class="tab-heart" aria-hidden="true">♥</span></button>
         <span class="tab-indicator" id="tab-indicator" aria-hidden="true"></span>
       </div>
 
       <div class="ribbon-actions">
-        <button class="btn-add" id="btn-add-game" type="button" aria-label="Add a game"><span class="btn-add-plus" aria-hidden="true">+</span><span class="btn-add-word">Add game</span></button>
-        <button class="btn-icon btn-grid" id="btn-grid" type="button" aria-pressed="false" aria-label="Grid view" title="Grid view"></button>
-        <button class="btn-icon mute-btn" id="mute-btn" type="button" aria-pressed="false" aria-label="Music" title="Music"></button>
+        <button class="btn-add" id="btn-add-game" type="button" aria-label="Add a game" data-tip="Add a game" data-kbd="N" aria-keyshortcuts="N"><span class="btn-add-plus" aria-hidden="true">+</span><span class="btn-add-word">Add game</span></button>
+        <button class="btn-icon btn-grid" id="btn-grid" type="button" aria-pressed="false" aria-label="Grid view" data-tip="Grid view" data-kbd="G" aria-keyshortcuts="G"></button>
+        <button class="btn-icon mute-btn" id="mute-btn" type="button" aria-pressed="false" aria-label="Music" data-tip="Music" data-kbd="M" aria-keyshortcuts="M"></button>
       </div>
 
       <div class="filter-pills" id="filter-pills" role="group" aria-label="Filter by genre">
@@ -80,15 +82,16 @@
   <!-- HERO: identity + the save-file readout -->
   <main class="hero-wrap" id="hero">
     <div class="hero-title">
-      <button class="hero-name" id="archive-name-btn" type="button" title="Rename the archive" aria-label="Shojol's — rename the archive">
+      <button class="hero-name" id="archive-name-btn" type="button" data-tip="Rename the archive" aria-label="Shojol's — rename the archive">
         <img class="hero-img" id="archive-name" src="shojols-logo.png" alt="Shojol's" width="591" height="204" decoding="async"/>
       </button>
       <h1 class="hero-accent">GAME ARCHIVE</h1>
       <div class="hero-stats">
         <div class="stat-block"><span class="stat-num" id="total-count">–</span><span class="stat-label">Cleared</span></div>
         <div class="stat-block"><span class="stat-num" id="backlog-count">–</span><span class="stat-label">In the backlog</span></div>
-        <button class="stat-block stat-clickable" id="reviewed-stat" type="button" aria-pressed="false" title="Show only reviewed games"><span class="stat-num" id="reviewed-count">–</span><span class="stat-label">Reviewed <span class="stat-arrow" aria-hidden="true">›</span></span></button>
+        <button class="stat-block stat-clickable" id="reviewed-stat" type="button" aria-pressed="false" data-tip="Show only reviewed games"><span class="stat-num" id="reviewed-count">–</span><span class="stat-label">Reviewed <span class="stat-arrow" aria-hidden="true">›</span></span></button>
       </div>
+      <div class="hero-now" id="hero-now" hidden></div>
     </div>
   </main>
 
@@ -130,7 +133,7 @@
             <div class="modal-number" id="modal-number"></div>
             <div class="modal-title-wrap">
               <h2 class="modal-title" id="modal-title"></h2>
-              <button class="icon-btn" id="edit-title-btn" type="button" aria-label="Edit title" title="Edit title">✎</button>
+              <button class="icon-btn" id="edit-title-btn" type="button" aria-label="Edit title" data-tip="Edit title">✎</button>
             </div>
             <div class="modal-slash" aria-hidden="true"></div>
             <div class="modal-genre" id="modal-genre"></div>
@@ -219,6 +222,21 @@
       <div class="sm-actions"><button class="btn-primary is-solid" id="btn-save-name" type="button">Save</button></div>
     </div>
   </div>
+
+  <!-- COMMAND PALETTE: jump to any game on any shelf, or run an action -->
+  <div class="modal-overlay palette-overlay" id="palette-overlay" role="dialog" aria-modal="true" aria-label="Jump to a game or action">
+    <div class="palette" id="palette">
+      <div class="palette-search">
+        <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.3 10.3L15 15" stroke="currentColor" stroke-width="1.6"/></svg>
+        <input class="palette-input" id="palette-input" type="text" placeholder="Jump to a game, or type a command…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list" aria-label="Jump to a game or action"/>
+        <kbd class="palette-esc" aria-hidden="true">Esc</kbd>
+      </div>
+      <div class="palette-list" id="palette-list" role="listbox" aria-label="Results"></div>
+      <div class="palette-foot" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+    </div>
+  </div>
+
+  <div class="tip" id="tip" aria-hidden="true"></div>
 
   <!-- HIDDEN MESSAGE (small dot, easy to miss unless you know it's there) -->
   <button id="easter-dot" class="easter-dot" type="button" aria-label="A secret"></button>
@@ -523,7 +541,7 @@
       soundEnabled = !soundEnabled;
       muteBtn.innerHTML = soundEnabled ? ICON.soundOn : ICON.soundOff;
       muteBtn.setAttribute('aria-pressed', String(soundEnabled));
-      muteBtn.title = soundEnabled ? 'Music on' : 'Music';
+      muteBtn.dataset.tip = soundEnabled ? 'Music on' : 'Music';
       if (soundEnabled) {
         bgMusic.preload = 'auto';
         bgMusic.play().catch(err => console.error('bg music failed to play:', err.name, err.message));
@@ -633,7 +651,7 @@
       // only show the bar if loading actually takes a moment
       xpShowTimer = setTimeout(() => xpWrap.classList.add('show'), 140);
       const t0 = performance.now();
-      const step = now => { setXP(0.92 * (1 - Math.exp(-(now - t0) / 900))); xpRaf = requestAnimationFrame(step); };
+      const step = now => { setXP(0.92 * (1 - Math.exp(-Math.max(0, now - t0) / 900))); xpRaf = requestAnimationFrame(step); };
       xpRaf = requestAnimationFrame(step);
     }
     function finishLoading() {
@@ -658,7 +676,7 @@
     function rollFrom(el, from, to, dur) {
       const t0 = performance.now();
       const step = now => {
-        const t = Math.min(1, (now - t0) / dur), k = 1 - Math.pow(1 - t, 4);
+        const t = Math.max(0, Math.min(1, (now - t0) / dur)), k = 1 - Math.pow(1 - t, 4); // rAF time can precede t0
         el.textContent = Math.round(from + (to - from) * k);
         if (t < 1) el._raf = requestAnimationFrame(step);
       };
@@ -719,6 +737,7 @@
         buildGenreBar();
         buildPills();
         renderCurrentView('enter');
+        startSuggestions();
       } catch(e) {
         console.error(e);
         loadState = 'error'; loadError = e;
@@ -952,7 +971,37 @@
     const shelfCache = new Map(), gridCache = new Map();
     let viewRenderedFor = { shelf: null, grid: null };
 
+    // ── NOW PLAYING (hero) ────────────────────
+    const heroNowEl = $('hero-now');
+    function renderNowPlaying() {
+      const playing = loadState !== 'ready' ? [] : tabOrder.flatMap(t => listFor(t).filter(g => g.status === 'Playing').map(g => ({ g, t }))).slice(0, 3);
+      const html = playing.length ? '<span class="now-label"><i aria-hidden="true"></i>Now playing</span>' +
+        playing.map(({ g, t }, i) => `${i ? '<span class="now-sep" aria-hidden="true">/</span>' : ''}<button type="button" class="now-game" data-id="${esc(g.id)}" data-tab="${t}">${esc(g.title)}</button>`).join('') : '';
+      if (heroNowEl._html === html) return;
+      heroNowEl._html = html; heroNowEl.innerHTML = html; heroNowEl.hidden = !playing.length;
+    }
+    heroNowEl.addEventListener('click', e => {
+      const btn = e.target.closest('.now-game');
+      if (!btn) return;
+      playClick();
+      jumpToGame(btn.dataset.id, btn.dataset.tab);
+    });
+
+    // Open any game from anywhere: switch shelf if needed, bring its card into view, then open it.
+    function jumpToGame(id, tab) {
+      const open = () => {
+        const g = findGame(id);
+        if (!g) return;
+        const card = (gridMode ? gridEl : shelfEl).querySelector(`[data-id="${CSS.escape(id)}"]:not([data-leaving])`);
+        if (card) card.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'auto' });
+        openModal(g, card);
+      };
+      if (tab !== activeTab || activeFilter !== 'all' || searchQuery || reviewedFilter) setTab(tab, { then: () => setTimeout(open, 360) });
+      else open();
+    }
+
     function renderCurrentView(mode = 'update') {
+      renderNowPlaying();
       const games = loadState === 'ready' ? getFilteredGames() : [];
       if (searchQuery) searchCount.textContent = `${games.length} found`;
       if (gridMode) renderInto(gridEl, gridStatusEl, games, true, mode);
@@ -1063,7 +1112,8 @@
       btnGrid.setAttribute('aria-pressed', String(on));
       btnGrid.innerHTML = on ? ICON.shelf : ICON.grid;
       btnGrid.setAttribute('aria-label', on ? 'Shelf view' : 'Grid view');
-      btnGrid.title = on ? 'Shelf view' : 'Grid view';
+      btnGrid.dataset.tip = on ? 'Shelf view' : 'Grid view';
+      if (tipFor === btnGrid) showTip(btnGrid);
       if (on) { gridWrapEl.scrollTop = 0; renderCurrentView('enter'); }
       else renderCurrentView(viewRenderedFor.shelf ? 'update' : 'swap');
       updateFrameFromScroll();
@@ -1083,13 +1133,12 @@
       const num = pad3(game.number || index + 1);
             const label = [title, game.rating ? `rated ${game.rating} out of 10` : '', game.status === 'Playing' ? 'currently playing' : '', game.review ? 'reviewed' : ''].filter(Boolean).join(', ');
       card.setAttribute('aria-label', label);
-      if (title.length > 30) card.title = title;
 
       const genreShort = shortGenre(firstGenre(game));
-      const score   = game.rating ? `<span class="card-score" title="Rated ${game.rating}/10">${game.rating}<small>/10</small></span>` : '<span class="card-score"></span>';
-      const mc      = game.metacritic ? `<span class="card-mc" title="Metacritic ${game.metacritic}" style="color:${metacriticText(game.metacritic)}">MC ${game.metacritic}</span>` : '<span class="card-mc"></span>';
+      const score   = game.rating ? `<span class="card-score">${game.rating}<small>/10</small></span>` : '<span class="card-score"></span>';
+      const mc      = game.metacritic ? `<span class="card-mc" style="color:${metacriticText(game.metacritic)}">MC ${game.metacritic}</span>` : '<span class="card-mc"></span>';
       const playing = game.status === 'Playing' ? '<span class="card-playing">Playing</span>' : '';
-      const hltb    = game.hltb ? `<span class="card-hltb" title="How long to beat">${esc(game.hltb)}</span>` : '';
+      const hltb    = game.hltb ? `<span class="card-hltb">${esc(game.hltb)}</span>` : '';
 
       card.innerHTML = `
         <span class="card-tilt"><span class="card-inner">
@@ -1098,7 +1147,7 @@
             ${playing}
           </span>
           <span class="card-body">
-            <span class="card-kicker"><span class="card-num">//${num}${game.review ? '<span class="card-reviewed" title="Reviewed"></span>' : ''}</span>${score}${mc}</span>
+            <span class="card-kicker"><span class="card-num">//${num}${game.review ? '<span class="card-reviewed"></span>' : ''}</span>${score}${mc}</span>
             <span class="card-name">${esc(title)}</span>
             <span class="card-foot"><span class="card-genre">${esc(genreShort)}</span>${hltb}</span>
           </span>
@@ -1685,7 +1734,194 @@
       setTimeout(reveal, 60);
     }
 
+    // ── COMMAND PALETTE (⌘K / Ctrl K) ────────
+    // One keystroke to any game on any shelf, or any action — styled as part of the archive.
+    const paletteOverlay = $('palette-overlay'), paletteInput = $('palette-input'), paletteList = $('palette-list');
+    const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    $('palette-kbd').textContent = IS_MAC ? '⌘K' : 'Ctrl K';
+    let palItems = [], palActive = 0;
+    const norm = s => (s || '').toLowerCase().replace(/[’'":.,!?()\-–—]/g, ' ').replace(/\s+/g, ' ').trim();
+    const goTab = t => { if (t !== activeTab || reviewedFilter || searchQuery || activeFilter !== 'all') setTab(t); };
+
+    function paletteActions(q) {
+      const list = [
+        { label: 'Go to Completed', kbd: '1', icon: '›', run: () => goTab('completed') },
+        { label: 'Go to Backlog', kbd: '2', icon: '›', run: () => goTab('backlog') },
+        { label: 'Go to Our games', kbd: '3', icon: '♥', run: () => goTab('ours') },
+        { label: 'Add a game', kbd: 'N', icon: '+', run: () => openAdd() },
+        { label: gridMode ? 'Switch to shelf view' : 'Switch to grid view', kbd: 'G', icon: '▦', run: () => setGrid(!gridMode) },
+        { label: soundEnabled ? 'Turn the music off' : 'Turn the music on', kbd: 'M', icon: '♪', run: () => muteBtn.click() },
+        { label: reviewedFilter ? 'Show every completed game' : 'Show only reviewed games', icon: '★', run: () => reviewedStat.click() },
+        { label: 'Search this shelf', kbd: '/', icon: '⌕', run: () => { searchEl.focus(); searchEl.select(); } },
+      ];
+      const n = norm(q);
+      return n ? list.filter(a => norm(a.label).includes(n)) : list;
+    }
+    function paletteGames(q) {
+      if (loadState !== 'ready') return [];
+      const n = norm(q);
+      if (!n) return tabOrder.flatMap(t => listFor(t).filter(g => g.status === 'Playing').map(g => ({ g, t })));
+      const num = /^\/*\d+$/.test(q.trim()) ? parseInt(q.replace(/\D/g, ''), 10) : null;
+      const out = [];
+      tabOrder.forEach((t, ti) => listFor(t).forEach(g => {
+        const title = norm(g.title);
+        let s = null;
+        if (num != null && g.number === num) s = 0;
+        else if (title.startsWith(n)) s = 1;
+        else if (title.split(' ').some(w => w.startsWith(n))) s = 2;
+        else if (title.includes(n)) s = 3;
+        if (s != null) out.push({ g, t, s: s * 10 + ti });
+      }));
+      return out.sort((a, b) => a.s - b.s || (a.g.title || '').localeCompare(b.g.title || '')).slice(0, 8);
+    }
+    function markMatch(title, q) {
+      const i = q.trim() ? title.toLowerCase().indexOf(q.trim().toLowerCase()) : -1;
+      if (i < 0) return esc(title);
+      const j = i + q.trim().length;
+      return esc(title.slice(0, i)) + '<mark>' + esc(title.slice(i, j)) + '</mark>' + esc(title.slice(j));
+    }
+    function renderPalette() {
+      const q = paletteInput.value;
+      const games = paletteGames(q), actions = paletteActions(q);
+      palItems = [];
+      const opt = (inner, item) => { const i = palItems.push(item) - 1; return `<div class="pal-opt" role="option" id="pal-opt-${i}" data-i="${i}" aria-selected="false">${inner}</div>`; };
+      let html = '';
+      if (games.length) {
+        html += `<div class="pal-group" role="presentation">${q.trim() ? 'Games' : 'Now playing'}</div>`;
+        games.forEach(({ g, t }) => {
+          const thumb = g.coverUrl ? `<img class="pal-thumb" src="${esc(g.coverUrl.replace('t_cover_big', 't_cover_small'))}" alt="" loading="lazy"/>` : '<span class="pal-thumb-ph"></span>';
+          const meta = [esc(TABS[t].label), `//${pad3(g.number || 0)}`, g.rating ? `${g.rating}/10` : '', g.status === 'Playing' ? '<span class="pal-playing">● playing</span>' : ''].filter(Boolean).join(' · ');
+          html += opt(`${thumb}<span class="pal-text"><span class="pal-title">${markMatch(g.title || 'Untitled', q)}</span><span class="pal-meta">${meta}</span></span><span class="pal-go" aria-hidden="true">↵</span>`, { run: () => jumpToGame(g.id, t) });
+        });
+      }
+      if (actions.length) {
+        html += '<div class="pal-group" role="presentation">Actions</div>';
+        actions.forEach(a => { html += opt(`<span class="pal-icon" aria-hidden="true">${a.icon}</span><span class="pal-text"><span class="pal-title">${esc(a.label)}</span></span>${a.kbd ? `<kbd class="pal-kbd">${a.kbd}</kbd>` : ''}`, a); });
+      }
+      if (!palItems.length) {
+        html = `<div class="pal-empty">Nothing called “${esc(q.trim())}” in the archive.</div><div class="pal-group" role="presentation">Actions</div>`;
+        html += opt(`<span class="pal-icon" aria-hidden="true">+</span><span class="pal-text"><span class="pal-title">Add “${esc(q.trim())}” as a new game</span></span>`, { run: () => openAdd(q.trim()) });
+      }
+      paletteList.innerHTML = html;
+      setPalActive(0);
+    }
+    function setPalActive(i, scroll = true) {
+      const opts = paletteList.querySelectorAll('.pal-opt');
+      if (!opts.length) { paletteInput.removeAttribute('aria-activedescendant'); return; }
+      palActive = (i + opts.length) % opts.length;
+      opts.forEach((o, k) => { const on = k === palActive; o.classList.toggle('active', on); o.setAttribute('aria-selected', String(on)); });
+      paletteInput.setAttribute('aria-activedescendant', opts[palActive].id);
+      if (scroll) opts[palActive].scrollIntoView({ block: 'nearest' });
+    }
+    function runPalette(i) {
+      const item = palItems[i];
+      if (!item) return;
+      closeOverlay(paletteOverlay);
+      playClick();
+      item.run();
+    }
+    function openPalette() {
+      if (overlayStack.length) return;
+      hideTip();
+      paletteInput.value = '';
+      renderPalette();
+      openOverlay(paletteOverlay, { focus: paletteInput });
+    }
+    paletteInput.addEventListener('input', renderPalette);
+    paletteInput.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setPalActive(palActive + 1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setPalActive(palActive - 1); }
+      else if (e.key === 'Enter') { e.preventDefault(); runPalette(palActive); }
+    });
+    paletteList.addEventListener('pointermove', e => { const o = e.target.closest('.pal-opt'); if (o && +o.dataset.i !== palActive) setPalActive(+o.dataset.i, false); });
+    paletteList.addEventListener('click', e => { const o = e.target.closest('.pal-opt'); if (o) runPalette(+o.dataset.i); });
+    $('palette-btn').addEventListener('click', e => { e.preventDefault(); openPalette(); });
+    closeOnBackdrop(paletteOverlay, () => closeOverlay(paletteOverlay));
+
+    // ── KEYBOARD SHORTCUTS ───────────────────
+    // ⌘K / Ctrl K anywhere; single keys only when you're not typing.
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (overlayStack.at(-1)?.el === paletteOverlay) closeOverlay(paletteOverlay); else openPalette();
+        return;
+      }
+      if (overlayStack.length || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+      const k = e.key.toLowerCase();
+      if (k === '1' || k === '2' || k === '3') { const t = tabOrder[+k - 1]; if (t !== activeTab || reviewedFilter) { setTab(t); playClick(); } }
+      else if (k === 'g') { setGrid(!gridMode); playClick(); }
+      else if (k === 'm') muteBtn.click();
+      else if (k === 'n') { e.preventDefault(); openAdd(); }
+      else return;
+      hideTip();
+    });
+
+    // ── TOOLTIPS ─────────────────────────────
+    // Labels + shortcut hints for controls. First one waits a beat; moving across controls is instant.
+    const tipEl = $('tip');
+    let tipTimer = 0, tipFor = null, tipHiddenAt = 0;
+    function showTip(el) {
+      if (!el.isConnected || !el.dataset.tip) return;
+      tipEl.innerHTML = `<span>${esc(el.dataset.tip)}</span>${el.dataset.kbd ? `<kbd>${esc(el.dataset.kbd)}</kbd>` : ''}`;
+      const r = el.getBoundingClientRect(), tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+      let x = Math.round(r.left + r.width / 2 - tw / 2), y = Math.round(r.bottom + 8);
+      x = Math.max(8, Math.min(innerWidth - tw - 8, x));
+      if (y + th > innerHeight - 8) y = Math.round(r.top - th - 8);
+      tipEl.style.transform = `translate(${x}px,${y}px)`;
+      tipEl.classList.add('show');
+      tipFor = el;
+    }
+    function hideTip() {
+      clearTimeout(tipTimer);
+      if (tipFor) { tipHiddenAt = performance.now(); tipFor = null; }
+      tipEl.classList.remove('show');
+    }
+    document.addEventListener('pointerover', e => {
+      if (e.pointerType !== 'mouse') return;
+      const el = e.target.closest?.('[data-tip]');
+      if (!el || el === tipFor) return;
+      hideTip();
+      tipTimer = setTimeout(() => showTip(el), performance.now() - tipHiddenAt < 500 ? 0 : 420);
+    });
+    document.addEventListener('pointerout', e => {
+      const el = e.target.closest?.('[data-tip]');
+      if (el && !el.contains(e.relatedTarget)) hideTip();
+    });
+    document.addEventListener('focusin', e => {
+      const el = e.target.closest?.('[data-tip]');
+      if (el && el.matches(':focus-visible')) { clearTimeout(tipTimer); showTip(el); }
+    });
+    document.addEventListener('focusout', hideTip);
+    ['pointerdown', 'wheel', 'scroll'].forEach(t => document.addEventListener(t, hideTip, { capture: true, passive: true }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+
+    // ── SEARCH SUGGESTIONS ───────────────────
+    // While the search box is idle it quietly suggests real titles from the archive.
+    const phText = $('search-ph-text');
+    let phTimer = 0, phTitles = [], phIdx = 0;
+    function startSuggestions() {
+      if (reduced() || phTimer) return;
+      const pool = [...new Set([...completedGames, ...backlogGames, ...oursGames].map(g => g.title).filter(t => t && t.length <= 24))];
+      if (pool.length < 3) return;
+      phTitles = pool.sort(() => Math.random() - 0.5).slice(0, 12);
+      searchWrap.classList.add('ph-live');
+      phTimer = setInterval(cycleSuggestion, 3400);
+    }
+    function cycleSuggestion() {
+      if (document.hidden || searchWrap.matches(':focus-within') || searchQuery) return;
+      const next = phIdx % 4 === 3 ? 'Search the archive' : `Try “${phTitles[phIdx % phTitles.length]}”`;
+      phIdx++;
+      const out = phText.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-7px)' }], { duration: 170, easing: EASE_IN, fill: 'forwards' });
+      out.finished.then(() => {
+        phText.textContent = next;
+        phText.animate([{ opacity: 0, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: EASE_OUT });
+        out.cancel();
+      }).catch(() => {});
+    }
+
     // ── BOOT ─────────────────────────────────
+    setTimeout(() => document.body.classList.remove('intro'), 2600);
     positionTabIndicator(true);
     document.fonts?.ready.then(() => { positionTabIndicator(true); measureShelf(); });
     loadAll();
